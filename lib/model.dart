@@ -28,8 +28,8 @@ class State {
   factory State(Map<String, dynamic> json) {
     List placedTilesList = json['placed_tiles'];
     final placedTiles = <Point<int>, PlacedTile>{};
-    for (var i = 0; i < placedTiles.length; i += 4) {
-      final coor = Point<int>(placedTilesList[i], placedTilesList[i + 2]);
+    for (var i = 0; i < placedTilesList.length; i += 4) {
+      final coor = Point<int>(placedTilesList[i], placedTilesList[i + 1]);
       placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
     return State._(placedTiles);
@@ -38,7 +38,7 @@ class State {
   jsonAfterProvisional(PresenceState presence) {
     final letterList = [];
     for (final entry in placedTiles.entries) {
-      letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
+      letterList.addAll([entry.key.x, entry.key.y, entry.value.letter, entry.value.username]);
     }
     for (final entry in presence.provisionalTiles.entries) {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);

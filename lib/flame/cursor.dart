@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
@@ -17,7 +16,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
   Future<void> onLoad() async {
     sprite = await Sprite.load('cursor.png');
     anchor = Anchor(.5, .5);
-    priority = 1;
+    priority = 2;
   }
 
   @override
