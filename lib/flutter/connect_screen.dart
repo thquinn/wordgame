@@ -15,8 +15,6 @@ class _ConnectScreenState extends State<ConnectScreen> {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    print('connect screen buildcontext');
-    print(context);
 
     return Scaffold(
       body: Column(

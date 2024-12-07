@@ -36,14 +36,15 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatelessWidget {
+  final connectScreen = ConnectScreen();
+  final gameWidget = GameWidget(game: WordGame());
+
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    final game = WordGame();
-
     if (!appState.isConnected()) {
-      return ConnectScreen();
+      return connectScreen;
     }
-    return GameWidget(game: game);
+    return gameWidget;
   }
 }

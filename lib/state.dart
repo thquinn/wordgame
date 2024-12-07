@@ -78,7 +78,14 @@ class MyAppState extends ChangeNotifier {
     await advanceCursor();
   }
   advanceCursor() async {
-    presenceState?.cursor += Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+    do {
+      presenceState?.cursor += Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+    } while (game!.state.placedTiles.containsKey(presenceState!.cursor));
+    await channel!.track(presenceState!.toJson());
+  }
+  retreaatCursorAndDelete() async {
+    presenceState?.cursor -= Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+    presenceState?.provisionalTiles.remove(presenceState?.cursor);
     await channel!.track(presenceState!.toJson());
   }
   playProvisionalTiles() async {

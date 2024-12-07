@@ -50,6 +50,10 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     if (event.character != null && 'abcdefghijklmnopqrstuvwxyz'.contains(event.character!)) {
       appState.tryPlayingTile(event.character!);
     }
+    // Deleting.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.backspace) {
+      appState.retreaatCursorAndDelete();
+    }
     // Submitting tiles.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.enter) {
       appState.playProvisionalTiles();
