@@ -26,7 +26,7 @@ class State {
   State._(this.placedTiles);
 
   factory State(Map<String, dynamic> json) {
-    List placedTilesList = json['placedTiles'];
+    List placedTilesList = json['placed_tiles'];
     final placedTiles = <Point<int>, PlacedTile>{};
     for (var i = 0; i < placedTiles.length; i += 4) {
       final coor = Point<int>(placedTilesList[i], placedTilesList[i + 2]);
@@ -44,7 +44,7 @@ class State {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     return {
-      'placedTiles': letterList,
+      'placed_tiles': letterList,
     };
   }
 }
@@ -55,7 +55,7 @@ class PlacedTile {
 
 class PresenceState {
   String username;
-  Point cursor;
+  Point<int> cursor;
   bool cursorHorizontal;
   List<String> rack;
   Map<Point<int>, String> provisionalTiles;

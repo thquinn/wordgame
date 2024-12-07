@@ -24,7 +24,7 @@ class WordCamera extends CameraComponent with KeyboardHandler {
       inputY = keysPressed.contains(LogicalKeyboardKey.arrowUp) ? -1 : keysPressed.contains(LogicalKeyboardKey.arrowDown) ? 1 : 0;
     }
     inputZoom = keysPressed.contains(LogicalKeyboardKey.minus) ? -1 : keysPressed.contains(LogicalKeyboardKey.equal) ? 1 : 0;
-    return false;
+    return true;
   }
 
   @override
