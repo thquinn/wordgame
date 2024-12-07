@@ -21,42 +21,47 @@ class Game {
 }
 
 class State {
-  Map<Point<int>, String> letters;
+  Map<Point<int>, PlacedTile> placedTiles;
 
-  State._(this.letters);
+  State._(this.placedTiles);
 
   factory State(Map<String, dynamic> json) {
-    List letterList = json['letters'];
-    final letters = <Point<int>, String>{};
-    for (var i = 0; i < letters.length; i += 3) {
-      final coor = Point<int>(letterList[i], letterList[i + 2]);
-      letters[coor] = letterList[i + 2];
+    List placedTilesList = json['placedTiles'];
+    final placedTiles = <Point<int>, PlacedTile>{};
+    for (var i = 0; i < placedTiles.length; i += 4) {
+      final coor = Point<int>(placedTilesList[i], placedTilesList[i + 2]);
+      placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
-    return State._(letters);
+    return State._(placedTiles);
   }
 
   jsonAfterProvisional(PresenceState presence) {
     final letterList = [];
-    for (final entry in letters.entries) {
-      letterList.addAll([entry.key.x, entry.key.y, entry.value]);
+    for (final entry in placedTiles.entries) {
+      letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     for (final entry in presence.provisionalTiles.entries) {
-      letterList.addAll([entry.key.x, entry.key.y, entry.value]);
+      letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     return {
-      'letters': letterList,
+      'placedTiles': letterList,
     };
   }
+}
+class PlacedTile {
+  final String letter, username;
+  PlacedTile(this.letter, this.username);
 }
 
 class PresenceState {
   String username;
   Point cursor;
+  bool cursorHorizontal;
   List<String> rack;
   Map<Point<int>, String> provisionalTiles;
 
-  PresenceState(this.username, this.cursor, this.rack, this.provisionalTiles);
-  PresenceState.newLocal(String username) : this(username, Point(0, 0), [], {});
+  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rack, this.provisionalTiles);
+  PresenceState.newLocal(String username) : this(username, Point(0, 0), true, [], {});
 
   toJson() {
     final provisionalList = [];

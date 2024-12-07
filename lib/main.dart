@@ -2,11 +2,9 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wordgame/flame/camera.dart';
 import 'package:wordgame/flame/game.dart';
 
 import 'state.dart';
-import 'flame/world.dart';
 import 'flutter/connect_screen.dart';
 
 Future<void> main() async {
