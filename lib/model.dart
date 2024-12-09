@@ -57,11 +57,12 @@ class PresenceState {
   String username;
   Point<int> cursor;
   bool cursorHorizontal;
+  int rackSize;
   List<String> rack;
   Map<Point<int>, String> provisionalTiles;
 
-  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rack, this.provisionalTiles);
-  PresenceState.newLocal(String username) : this(username, Point(0, 0), true, [], {});
+  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.provisionalTiles);
+  PresenceState.newLocal(String username) : this(username, Point(0, 0), true, 7, ['a', 'b', 'c', 'd', 'e', 'f'], {});
 
   toJson() {
     final provisionalList = [];
@@ -71,6 +72,7 @@ class PresenceState {
     return {
       'username': username,
       'cursor': [cursor.x, cursor.y],
+      'rackSize': rackSize,
       'rack': rack,
       'provisionalTiles': provisionalList,
     };

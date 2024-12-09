@@ -52,7 +52,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     }
     // Deleting.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.backspace) {
-      appState.retreaatCursorAndDelete();
+      appState.retreatCursorAndDelete();
     }
     // Submitting tiles.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.enter) {

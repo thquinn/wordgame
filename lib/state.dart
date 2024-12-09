@@ -70,10 +70,18 @@ class MyAppState extends ChangeNotifier {
   tryPlayingTile(String letter) async {
     if (!gameIsActive()) return;
     final presenceState = this.presenceState!;
+    // Must have enough of the letter on rack.
+    int numOnRack = presenceState.rack.where((item) => item == letter).length;
+    int numProvisional = presenceState.provisionalTiles.values.where((item) => item == letter).length;
+    if (numOnRack <= numProvisional) {
+      return;
+    }
+    // Can't place on top of an existing tile.
     if (game!.state.placedTiles.containsKey(presenceState.cursor)) {
       await advanceCursor();
       return;
     }
+    // Place.
     presenceState.provisionalTiles[presenceState.cursor] = letter;
     await advanceCursor();
   }
@@ -83,19 +91,23 @@ class MyAppState extends ChangeNotifier {
     } while (game!.state.placedTiles.containsKey(presenceState!.cursor));
     await channel!.track(presenceState!.toJson());
   }
-  retreaatCursorAndDelete() async {
+  retreatCursorAndDelete() async {
     presenceState?.cursor -= Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
     presenceState?.provisionalTiles.remove(presenceState?.cursor);
     await channel!.track(presenceState!.toJson());
   }
   playProvisionalTiles() async {
     if (!gameIsActive()) return;
+    // Play.
     final version = game!.version;
     final result = await Supabase.instance.client.from('games').update({
       'state': game!.state.jsonAfterProvisional(presenceState!),
       'version': version + 1,
     }).eq('channel', roomID!).eq('version', version).select().maybeSingle();
     if (result != null) {
+      for (final letter in presenceState!.provisionalTiles.values) {
+        presenceState!.rack.remove(letter);
+      }
       presenceState!.provisionalTiles.clear();
       await channel!.track(presenceState!.toJson());
     }

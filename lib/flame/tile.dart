@@ -5,7 +5,6 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/state.dart';
@@ -113,14 +112,14 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
   late Sprite spriteTile, spriteTilePlaced, spriteProvisional;
   double lift = 0;
 
-  final styleTile = TextPaint(
+  final TextPaint styleTile = TextPaint(
     style: TextStyle(
       fontSize: .66,
       fontFamily: 'Katahdin Round Dekerned',
       color: BasicPalette.black.color,
     ),
   );
-  final styleProvisional = TextPaint(
+  final TextPaint styleProvisional = TextPaint(
     style: TextStyle(
       fontSize: .66,
       fontFamily: 'Katahdin Round Dekerned',
