@@ -87,16 +87,22 @@ class WordGameState extends ChangeNotifier {
     await advanceCursor();
   }
   advanceCursor() async {
+    if (!gameIsActive()) return;
     do {
       presenceState?.cursor += Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
     } while (game!.state.placedTiles.containsKey(presenceState!.cursor));
     await channel!.track(presenceState!.toJson());
   }
   retreatCursorAndDelete() async {
+    if (!gameIsActive()) return;
+    if (presenceState!.provisionalTiles.containsKey(presenceState!.cursor)) {
+      presenceState!.provisionalTiles.remove(presenceState!.cursor);
+      return;
+    }
     do {
-      presenceState?.cursor -= Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+      presenceState!.cursor -= Point<int>(presenceState!.cursorHorizontal == true ? 1 : 0, presenceState!.cursorHorizontal == true ? 0 : 1);
     } while (game!.state.placedTiles.containsKey(presenceState!.cursor));
-    presenceState?.provisionalTiles.remove(presenceState?.cursor);
+    presenceState!.provisionalTiles.remove(presenceState!.cursor);
     await channel!.track(presenceState!.toJson());
   }
   playProvisionalTiles() async {

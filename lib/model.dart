@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:wordgame/util.dart';
+import 'package:wordgame/words.dart';
+
 class Game {
   final int id;
   final String channel;
@@ -59,10 +62,40 @@ class PresenceState {
   bool cursorHorizontal;
   int rackSize;
   List<String> rack;
+  List<double> bagDistribution;
   Map<Point<int>, String> provisionalTiles;
 
-  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.provisionalTiles);
-  PresenceState.newLocal(String username) : this(username, Point(0, 0), true, 7, ['a', 'b', 'c', 'd', 'e', 'f'], {});
+  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
+  factory PresenceState.newLocal(String username) {
+    final presenceState = PresenceState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
+    while (presenceState.rack.length < presenceState.rackSize) {
+      presenceState.drawTile();
+    }
+    presenceState.rack.sort();
+    return presenceState;
+  }
+
+  drawTile() {
+    if (rack.length >= rackSize) return;
+    final totalWeight = bagDistribution.reduce((a, b) => a + b);
+    double selector = Util.random.nextDouble() * totalWeight;
+    for (int i = 0; i < bagDistribution.length; i++) {
+      selector -= bagDistribution[i];
+      if (selector <= 0) {
+        bagDistribution[i] -= .01;
+        if (bagDistribution[i] < 0) {
+          refillBag();
+        }
+        rack.add('abcdefghijklmnopqrstuvwxyz'[i]);
+        return;
+      }
+    }
+  }
+  refillBag() {
+    for (int i = 0; i < bagDistribution.length; i++) {
+      bagDistribution[i] += Words.letterDistribution[i];
+    }
+  }
 
   toJson() {
     final provisionalList = [];

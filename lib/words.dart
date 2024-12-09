@@ -1,21 +1,35 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/state.dart';
 
 class Words {
-  static Set<String>? wordSet;
+  static Set<String> wordSet = {};
+  static List<double> letterDistribution = [];
 
   static initialize() async {
     final file = await rootBundle.loadString('assets/enable1.txt');
     LineSplitter ls = LineSplitter();
     wordSet = ls.convert(file).toSet();
-    print('Initialized word list with ${wordSet!.length} words.');
+    print('Initialized word list with ${wordSet.length} words.');
+    // Calculate letter distribution.
+    final counts = List.filled(26, 0);
+    final codeUnitA = 'a'.codeUnitAt(0);
+    double total = 0.0;
+    for (final word in wordSet) {
+      for (final codeUnit in word.codeUnits) {
+        counts[codeUnit - codeUnitA]++;
+        total++;
+      }
+    }
+    letterDistribution = counts.map((c) => max(c / total, 0.01)).toList();
+    debugPrint('Calculated letter distribution: ${jsonEncode(letterDistribution)}');
   }
 
   static bool isLegal(String word) {
-    return wordSet?.contains(word.toLowerCase()) == true;
+    return wordSet.contains(word.toLowerCase()) == true;
   }
 
   static List<ProvisionalWord> getProvisionalWords(WordGameState wordGameState) {

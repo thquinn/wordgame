@@ -31,7 +31,7 @@ class WordCamera extends CameraComponent with KeyboardHandler {
 
   @override
   void update(double dt) {
-    viewfinder.transform.position -= Vector2(inputX, inputY) * 500 * dt;
+    viewfinder.transform.position -= Vector2(inputX, inputY) * 750 * dt;
     zoom /= pow(4, dt * inputZoom);
     zoom = zoom.clamp(6, 24);
     viewfinder.visibleGameSize = Vector2(zoom, zoom);
