@@ -21,7 +21,7 @@ class RackAnchor extends AlignComponent {
 }
 
 class Rack extends RectangleComponent with HasGameRef<WordGame> {
-  late MyAppState appState;
+  late WordGameState appState;
 
   Rack() : super(size: Vector2(1000, RackBack.rackHeight)) {
     renderShape = false;
@@ -35,7 +35,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
   @override
   void onMount() {
     super.onMount();
-    appState = Provider.of<MyAppState>(game.buildContext!, listen: false);
+    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     final presenceState = appState.presenceState!;
     add(RackBack(presenceState));
     for (int i = 0; i < presenceState.rackSize; i++) {

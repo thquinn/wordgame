@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
+      create: (context) => WordGameState(),
       child: MaterialApp(
         title: 'Namer App',
         theme: ThemeData(
@@ -42,7 +42,7 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
+    var appState = context.watch<WordGameState>();
     if (!appState.isConnected()) {
       return connectScreen;
     }

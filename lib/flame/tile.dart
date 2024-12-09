@@ -12,7 +12,7 @@ import 'package:wordgame/state.dart';
 class TileManager extends PositionComponent with HasGameRef<WordGame> {
     static int updates = 0;
 
-    late MyAppState appState;
+    late WordGameState appState;
     Map<Point<int>, TileWrapper> tiles = {};
 
     TileManager() : super(size: Vector2.all(1));
@@ -20,7 +20,7 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
     @override
     void onMount() {
       super.onMount();
-      appState = Provider.of<MyAppState>(game.buildContext!, listen: false);
+      appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     }
 
     @override
@@ -50,7 +50,7 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
 }
 
 class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility {
-  late MyAppState appState;
+  late WordGameState appState;
   Point<int> coor;
   late Tile tile;
 
@@ -92,7 +92,7 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
   @override
   void onMount() {
     super.onMount();
-    appState = Provider.of<MyAppState>(game.buildContext!, listen: false);
+    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     transform.position = Vector2(coor.x.toDouble(), coor.y.toDouble());
     update(0);
   }
@@ -106,7 +106,7 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
   TileState tileState = TileState.unknown;
-  late MyAppState appState;
+  late WordGameState appState;
   Point<int> coor;
   late TextComponent textComponent;
   late Sprite spriteTile, spriteTilePlaced, spriteProvisional;
@@ -150,7 +150,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
   @override
   void onMount() {
     super.onMount();
-    appState = Provider.of<MyAppState>(game.buildContext!, listen: false);
+    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     update(0);
   }
 

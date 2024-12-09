@@ -14,7 +14,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
+    var appState = context.watch<WordGameState>();
 
     return Scaffold(
       body: Column(

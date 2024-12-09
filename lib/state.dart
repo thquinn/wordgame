@@ -2,10 +2,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wordgame/words.dart';
 
 import 'model.dart';
 
-class MyAppState extends ChangeNotifier {
+class WordGameState extends ChangeNotifier {
   String? roomID;
   RealtimeChannel? channel;
   PresenceState? presenceState;
@@ -92,12 +93,38 @@ class MyAppState extends ChangeNotifier {
     await channel!.track(presenceState!.toJson());
   }
   retreatCursorAndDelete() async {
-    presenceState?.cursor -= Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+    do {
+      presenceState?.cursor -= Point<int>(presenceState?.cursorHorizontal == true ? 1 : 0, presenceState?.cursorHorizontal == true ? 0 : 1);
+    } while (game!.state.placedTiles.containsKey(presenceState!.cursor));
     presenceState?.provisionalTiles.remove(presenceState?.cursor);
     await channel!.track(presenceState!.toJson());
   }
   playProvisionalTiles() async {
     if (!gameIsActive()) return;
+    final provisionalTiles = presenceState!.provisionalTiles;
+    if (provisionalTiles.isEmpty) return;
+    // Can only play tiles in a straight line.
+    if (!provisionalTiles.keys.every((coor) => coor.x == provisionalTiles.keys.first.x) && !provisionalTiles.keys.every((coor) => coor.y == provisionalTiles.keys.first.y)) {
+      return;
+    }
+    // Can only play tiles connected to each other or already-played tiles.
+    final minX = provisionalTiles.keys.map((e) => e.x).reduce(min);
+    final maxX = provisionalTiles.keys.map((e) => e.x).reduce(max);
+    final minY = provisionalTiles.keys.map((e) => e.y).reduce(min);
+    final maxY = provisionalTiles.keys.map((e) => e.y).reduce(max);
+    for (int x = minX; x <= maxX; x++) {
+      for (int y = minY; y <= maxY; y++) {
+        final point = Point<int>(x, y);
+        if (!provisionalTiles.containsKey(point) && !game!.state.placedTiles.containsKey(point)) {
+          return;
+        }
+      } 
+    }
+    // Check for word legality.
+    final provisionalWords = Words.getProvisionalWords(this);
+    if (provisionalWords.any((w) => !Words.isLegal(w.word))) {
+      return;
+    }
     // Play.
     final version = game!.version;
     final result = await Supabase.instance.client.from('games').update({
@@ -105,10 +132,10 @@ class MyAppState extends ChangeNotifier {
       'version': version + 1,
     }).eq('channel', roomID!).eq('version', version).select().maybeSingle();
     if (result != null) {
-      for (final letter in presenceState!.provisionalTiles.values) {
+      for (final letter in provisionalTiles.values) {
         presenceState!.rack.remove(letter);
       }
-      presenceState!.provisionalTiles.clear();
+      provisionalTiles.clear();
       await channel!.track(presenceState!.toJson());
     }
   }

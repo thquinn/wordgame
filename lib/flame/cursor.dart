@@ -8,7 +8,7 @@ import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/state.dart';
 
 class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler {
-  late MyAppState appState;
+  late WordGameState appState;
 
   Cursor() : super(size: Vector2.all(2));
 
@@ -22,7 +22,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
   @override
   void onMount() {
     super.onMount();
-    appState = Provider.of<MyAppState>(game.buildContext!, listen: false);
+    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
   }
 
   @override
