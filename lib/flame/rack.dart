@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/layout.dart';
@@ -10,33 +11,26 @@ import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
 class RackAnchor extends AlignComponent {
-
-
   RackAnchor() : super(
     child: Rack(),
     alignment: Anchor.bottomLeft,
   );
-
-
 }
 
 class Rack extends RectangleComponent with HasGameRef<WordGame> {
-  late WordGameState appState;
+  late PresenceState presenceState;
+  late Point<double> tileTimer;
 
   Rack() : super(size: Vector2(1000, RackBack.rackHeight)) {
     renderShape = false;
-  }
-
-  @override
-  Future<void> onLoad() async {
-    
+    tileTimer = Point(0, 3);
   }
 
   @override
   void onMount() {
     super.onMount();
-    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
-    final presenceState = appState.presenceState!;
+    final appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
+    presenceState = appState.presenceState!;
     add(RackBack(presenceState));
     for (int i = 0; i < presenceState.rackSize; i++) {
       add(RackTile(presenceState, i));
@@ -45,7 +39,15 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
-
+    if (presenceState.rack.length >= presenceState.rackSize) {
+      tileTimer = Point(0, tileTimer.y);
+    } else {
+      tileTimer += Point(dt, 0);
+    }
+    if (tileTimer.x >= tileTimer.y) {
+      presenceState.drawTile();
+      tileTimer -= Point(tileTimer.y, 0);
+    }
   }
 }
 

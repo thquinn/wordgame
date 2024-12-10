@@ -15,6 +15,7 @@ class WordCamera extends CameraComponent with KeyboardHandler {
   WordCamera() : super() {
     backdrop.add(ParallaxGrid());
     viewport.add(RackAnchor());
+    viewport.add(FpsTextComponent());
   }
 
   @override

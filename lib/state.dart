@@ -52,7 +52,6 @@ class WordGameState extends ChangeNotifier {
       if (status != RealtimeSubscribeStatus.subscribed) return;
       await channel!.track(presenceState!.toJson());
     });
-
     notifyListeners();
   }
 
@@ -68,6 +67,11 @@ class WordGameState extends ChangeNotifier {
     }
   }
 
+  moveCursorTo(Point<int> coor) async {
+    if (!gameIsActive()) return;
+    presenceState!.cursor = coor;
+    await channel!.track(presenceState!.toJson());
+  }
   tryPlayingTile(String letter) async {
     if (!gameIsActive()) return;
     final presenceState = this.presenceState!;

@@ -44,7 +44,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     if (keyDownOrRepeat && !keysPressed.contains(LogicalKeyboardKey.shiftLeft) && !keysPressed.contains(LogicalKeyboardKey.shiftRight)) {
       final inputX = event.logicalKey == LogicalKeyboardKey.arrowLeft ? -1 : event.logicalKey == LogicalKeyboardKey.arrowRight ? 1 : 0;
       final inputY = event.logicalKey == LogicalKeyboardKey.arrowUp ? -1 : event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : 0;
-      appState.presenceState!.cursor += Point<int>(inputX, inputY);
+      appState.moveCursorTo(appState.presenceState!.cursor + Point<int>(inputX, inputY));
     }
     // Placing tiles.
     if (event.character != null && 'abcdefghijklmnopqrstuvwxyz'.contains(event.character!)) {

@@ -98,9 +98,9 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
   }
 
   @override void render(Canvas canvas) {
-    if (tile.lift > 0) {
+    //if (tile.lift > 0) {
       super.render(canvas);
-    }
+    //}
   }
 }
 
