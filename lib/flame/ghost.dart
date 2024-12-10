@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/palette.dart';
-import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/extensions.dart';
@@ -11,25 +10,43 @@ import 'package:wordgame/state.dart';
 
 class GhostManager extends PositionComponent with HasGameRef<WordGame> {
     late WordGameState appState;
-    Map<Point<int>, Ghost> tiles = {};
+    Map<String, Ghost> ghosts = {};
 
     @override
     void onMount() {
       super.onMount();
       appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
-      //add(Ghost('mickeymilan'));
     }
 
     @override
     void update(double dt) {
-      if (appState.game == null) return;
+      // Removing ghosts.
+      final removedUsernames = ghosts.keys.where((username) => !appState.channel!.presenceState().any((p) => p.presences[0].payload['username'] == username)).toList();
+      for (final removedUsername in removedUsernames) {
+        print('Removing ghost for user $removedUsername');
+        Ghost ghost = ghosts[removedUsername]!;
+        remove(ghost);
+        ghosts.remove(removedUsername);
+      }
+      // Adding ghosts.
+      for (final presence in appState.channel!.presenceState()) {
+        final username = presence.presences[0].payload['username'];
+        if (username == appState.presenceState!.username) continue;
+        if (!ghosts.containsKey(username)) {
+          print('Creating ghost for user $username');
+          Ghost ghost = Ghost(username);
+          ghosts[username] = ghost;
+          add(ghost);
+        }
+      }
     }
 }
 
 class Ghost extends PositionComponent with HasGameRef<WordGame> {
-  final TextPaint textPaint = TextPaint(
+  final FixedHeightTextPaint textPaint = FixedHeightTextPaint(
+    .3,
     style: TextStyle(
-      fontSize: .33,
+      fontSize: .25,
       fontFamily: 'Solway',
       fontWeight: FontWeight.bold,
       color: BasicPalette.white.color,
@@ -37,7 +54,7 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
   );
 
   late WordGameState appState;
-  late NineTileBoxComponent boxComponent;
+  late ScaledNineTileBoxComponent boxComponent;
   late TextBoxComponent textComponent;
   String username;
   
@@ -45,20 +62,29 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
   
   @override
   Future<void> onLoad() async {
+    position = Vector2(0, 1);
     final boxSprite = await Sprite.load('ghost.png');
     boxComponent = ScaledNineTileBoxComponent();
     boxComponent.nineTileBox = AlphaNineTileBox(boxSprite, opacity: 0.1, leftWidth: 75, rightWidth: 75, topHeight: 127, bottomHeight: 127);
+    boxComponent.position = Vector2(0, -.75);
+    boxComponent.anchor = Anchor(.5, 0);
     boxComponent.size = Vector2(2, 1);
-    boxComponent.scale = Vector2(.1, .1);
+    boxComponent.scale = Vector2(1, 1);
+    boxComponent.cornerScale = .005;
     add(boxComponent);
     textComponent = TextBoxComponent(
       textRenderer: textPaint,
       text: username,
-      align: Anchor.center,
-      size: Vector2(10, 1),
-      pixelRatio: 100,
+      position: Vector2(0, -8.1),
+      align: Anchor.topCenter,
+      size: Vector2(50, 10),
+      anchor: Anchor(.5, 0),
+      pixelRatio: 200,
+      boxConfig: TextBoxConfig(growingBox: true)
     );
     add(textComponent);
+    final arrowSprite = await Sprite.load('ghost_arrow.png');
+    add(SpriteComponent(sprite: arrowSprite, position: Vector2(0, .275), size: Vector2(1, 1), anchor: Anchor.bottomCenter)..opacity=0.1);
   }
 
   @override
@@ -69,7 +95,19 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
-    final width = textComponent.getLineWidth(username, username.length);
-    size = Vector2(width, 1);
+    final usernames = [username];//, 'anotherguy', 'Thirdman McLongname', 'fourtho', 'fiff', 'sicks'];
+    final width = max(usernames.map((u) => textComponent.getLineWidth(u, u.length)).reduce(max) + .5, 1.0);
+    textComponent.text = usernames.join('\n');
+    final height = usernames.length * textPaint.fixedHeight + .8;
+    boxComponent.setSize(Vector2(width, height));
+    try {
+      final presence = appState.channel!.presenceState().firstWhere((presence) => presence.presences[0].payload['username'] == username);
+      final payload = presence.presences[0].payload;
+      final cursor = Point<int>(payload['cursor'][0], payload['cursor'][1]);
+      position = Vector2(cursor.x.toDouble(), cursor.y.toDouble() + 1.2);
+    } catch (e) {
+      print('Ghost for $username failed to find presence.');
+      print(e.toString());
+    }
   }
 }

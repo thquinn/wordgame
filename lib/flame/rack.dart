@@ -66,7 +66,7 @@ class RackBack extends ScaledNineTileBoxComponent {
     final width = presenceState.rackSize * RackTile.spacing + 10;
     // We have to do this stupid dance because NineTileBoxComponent has no way of setting the corner scale.
     size = Vector2(width, rackHeight);
-    scale = Vector2(.2, .2);
+    cornerScale = .2;
     super.onLoad();
   }
 }
