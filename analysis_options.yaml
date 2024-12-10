@@ -27,6 +27,7 @@ linter:
   rules:
     prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
     avoid_print: false
+    non_constant_identifier_names: false
     prefer_const_constructors_in_immutables: false
     prefer_const_constructors: false
     prefer_const_literals_to_create_immutables: false

@@ -24,21 +24,29 @@ class Game {
 }
 
 class State {
+  int score = 0;
   Map<Point<int>, PlacedTile> placedTiles;
 
-  State._(this.placedTiles);
+  State._(this.score, this.placedTiles);
 
   factory State(Map<String, dynamic> json) {
+    final score = json['score'];
     List placedTilesList = json['placed_tiles'];
     final placedTiles = <Point<int>, PlacedTile>{};
     for (var i = 0; i < placedTilesList.length; i += 4) {
       final coor = Point<int>(placedTilesList[i], placedTilesList[i + 1]);
       placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
-    return State._(placedTiles);
+    return State._(score, placedTiles);
   }
 
-  jsonAfterProvisional(PresenceState presence) {
+  jsonAfterProvisional(PresenceState presence, List<ProvisionalWord> provisionalWords) {
+    // Calculate move score.
+    int moveScore = 0;
+    for (ProvisionalWord provisionalWord in provisionalWords) {
+      moveScore += provisionalWord.score();
+    }
+    // Set state.
     final letterList = [];
     for (final entry in placedTiles.entries) {
       letterList.addAll([entry.key.x, entry.key.y, entry.value.letter, entry.value.username]);
@@ -47,6 +55,7 @@ class State {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     return {
+      'score': score + moveScore,
       'placed_tiles': letterList,
     };
   }

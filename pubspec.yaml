@@ -80,6 +80,11 @@ flutter:
     - family: Katahdin Round Dekerned
       fonts:
         - asset: assets/fonts/KatahdinRound-Dekerned.otf
+    - family: Solway
+      fonts:
+        - asset: assets/fonts/Solway-Regular.ttf
+        - asset: assets/fonts/Solway-ExtraBold.ttf
+          weight: 700
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

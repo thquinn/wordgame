@@ -8,6 +8,12 @@ import 'package:wordgame/state.dart';
 class Words {
   static Set<String> wordSet = {};
   static List<double> letterDistribution = [];
+  static Map<String, int> letterValues = {
+    'a': 1, 'b': 2, 'c': 2, 'd': 1, 'e': 1, 'f': 2, 'g': 1, 'h': 2,
+    'i': 1, 'j': 3, 'k': 3, 'l': 1, 'm': 1, 'n': 1, 'o': 1, 'p': 2,
+    'q': 4, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 3, 'w': 2, 'x': 3,
+    'y': 2, 'z': 3
+  };
 
   static initialize() async {
     final file = await rootBundle.loadString('assets/enable1.txt');
@@ -71,4 +77,9 @@ class ProvisionalWord {
   final List<String> usernames;
 
   ProvisionalWord(this.word, this.usernames);
+
+  int score() {
+    int baseScore = word.split('').map((char) => Words.letterValues[char] ?? 0).reduce((sum, value) => sum + value);
+    return baseScore * usernames.length;
+  }
 }

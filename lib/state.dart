@@ -47,14 +47,25 @@ class WordGameState extends ChangeNotifier {
         }
       },
     ).subscribe();
-    presenceState = PresenceState.newLocal('vsman');
-    channel!.subscribe((status, error) async {
-      if (status != RealtimeSubscribeStatus.subscribed) return;
-      await channel!.track(presenceState!.toJson());
-    });
+    presenceState = PresenceState.newLocal(username);
+    channel!
+      .onBroadcast(event: 'assist', callback: onReceiveAssist)
+      .subscribe((status, error) async {
+        if (status != RealtimeSubscribeStatus.subscribed) return;
+        await channel!.track(presenceState!.toJson());
+      });
     notifyListeners();
   }
 
+  // Broadcast messages.
+  onReceiveAssist(payload) {
+    final usernames = List<String>.from(payload['usernames'] as List);
+    if (usernames.contains(presenceState!.username)) {
+      presenceState!.drawTile();
+    }
+  }
+
+  // Commands.
   startGame() async {
     if (!isConnected()) return;
     try {
@@ -138,15 +149,22 @@ class WordGameState extends ChangeNotifier {
     // Play.
     final version = game!.version;
     final result = await Supabase.instance.client.from('games').update({
-      'state': game!.state.jsonAfterProvisional(presenceState!),
+      'state': game!.state.jsonAfterProvisional(presenceState!, provisionalWords),
       'version': version + 1,
     }).eq('channel', roomID!).eq('version', version).select().maybeSingle();
     if (result != null) {
+      // Finalize move.
       for (final letter in provisionalTiles.values) {
         presenceState!.rack.remove(letter);
       }
       provisionalTiles.clear();
       await channel!.track(presenceState!.toJson());
+      // Broadcasts.
+      final assistUsernames = provisionalWords.expand((pw) => pw.usernames).toSet().toList();
+      assistUsernames.remove(presenceState!.username);
+      if (assistUsernames.isNotEmpty) {
+        channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': presenceState!.username, 'usernames': assistUsernames});
+      }
     }
   }
 }
