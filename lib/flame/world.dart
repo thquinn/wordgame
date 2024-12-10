@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:wordgame/flame/cursor.dart';
+import 'package:wordgame/flame/ghost.dart';
 import 'package:wordgame/flame/tile.dart';
 
 class WordWorld extends World {
@@ -9,5 +10,6 @@ class WordWorld extends World {
   Future<void> onLoad() async {
     await add(TileManager());
     await add(Cursor());
+    await add(GhostManager());
   }
 }

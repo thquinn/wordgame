@@ -15,8 +15,6 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
     late WordGameState appState;
     Map<Point<int>, TileWrapper> tiles = {};
 
-    TileManager() : super(size: Vector2.all(1));
-
     @override
     void onMount() {
       super.onMount();

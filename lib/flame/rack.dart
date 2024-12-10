@@ -6,6 +6,7 @@ import 'package:flame/layout.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
@@ -51,7 +52,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
   }
 }
 
-class RackBack extends NineTileBoxComponent {
+class RackBack extends ScaledNineTileBoxComponent {
   static double rackHeight = 105;
 
   PresenceState presenceState;
@@ -64,23 +65,9 @@ class RackBack extends NineTileBoxComponent {
     nineTileBox = AlphaNineTileBox(sprite, opacity: 0.8, leftWidth: 1, bottomHeight: 1, rightWidth: 128, topHeight: 128);
     final width = presenceState.rackSize * RackTile.spacing + 10;
     // We have to do this stupid dance because NineTileBoxComponent has no way of setting the corner scale.
+    size = Vector2(width, rackHeight);
     scale = Vector2(.2, .2);
-    size = Vector2(width, rackHeight)..divide(scale);
-  }
-}
-class AlphaNineTileBox extends NineTileBox {
-  // And we have to make this stupid thing because there's no way to set opacity on NineTileBoxComponent.
-  late Rect spriteCenter;
-  late Paint paint;
-
-  AlphaNineTileBox(super.sprite, {opacity = 1.0, leftWidth, bottomHeight, rightWidth, topHeight}) : super.withGrid() {
-    spriteCenter = Rect.fromLTRB(leftWidth, topHeight, sprite.src.width - rightWidth, sprite.src.height - bottomHeight);
-    paint = Paint()..color = Color.fromRGBO(255, 255, 255, opacity);
-  }
-
-  @override
-  void drawRect(Canvas c, [Rect? dst]) {
-    c.drawImageNine(sprite.image, spriteCenter, dst!, paint);
+    super.onLoad();
   }
 }
 
@@ -130,13 +117,13 @@ class RackTile extends SpriteComponent {
     final letter = presenceState.rack[index];
     textComponent.text = letter.toUpperCase();
     // Check if provisional.
-    bool isProvisional = false;
     int numOfLetter = presenceState.provisionalTiles.values.where((item) => item == letter).length;
-    for (int i = 0; i <= index; i++) {
+    bool isProvisional = numOfLetter > 0;
+    for (int i = index - 1; i >= 0; i--) {
       if (presenceState.rack[i] == letter) {
         numOfLetter--;
         if (numOfLetter == 0) {
-          isProvisional = true;
+          isProvisional = false;
           break;
         }
       }
