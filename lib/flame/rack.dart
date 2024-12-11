@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/layout.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class RackAnchor extends AlignComponent {
 }
 
 class Rack extends RectangleComponent with HasGameRef<WordGame> {
-  late PresenceState presenceState;
+  late LocalState localState;
   late Point<double> tileTimer;
 
   Rack() : super(size: Vector2(1000, RackBack.rackHeight)) {
@@ -31,22 +32,22 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
   void onMount() {
     super.onMount();
     final appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
-    presenceState = appState.presenceState!;
-    add(RackBack(presenceState));
-    for (int i = 0; i < presenceState.rackSize; i++) {
-      add(RackTile(presenceState, i));
+    localState = appState.localState!;
+    add(RackBack(localState));
+    for (int i = 0; i < localState.rackSize; i++) {
+      add(RackTile(localState, i));
     }
   }
 
   @override
   void update(double dt) {
-    if (presenceState.rack.length >= presenceState.rackSize) {
+    if (localState.rack.length >= localState.rackSize) {
       tileTimer = Point(0, tileTimer.y);
     } else {
       tileTimer += Point(dt, 0);
     }
     if (tileTimer.x >= tileTimer.y) {
-      presenceState.drawTile();
+      localState.drawTile();
       tileTimer -= Point(tileTimer.y, 0);
     }
   }
@@ -55,15 +56,15 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
 class RackBack extends ScaledNineTileBoxComponent {
   static double rackHeight = 105;
 
-  PresenceState presenceState;
+  LocalState localState;
 
-  RackBack(this.presenceState);
+  RackBack(this.localState);
 
   @override
   Future<void> onLoad() async {
     final sprite = await Sprite.load('rack.png');
     nineTileBox = AlphaNineTileBox(sprite, opacity: 0.8, leftWidth: 1, bottomHeight: 1, rightWidth: 128, topHeight: 128);
-    final width = presenceState.rackSize * RackTile.spacing + 10;
+    final width = localState.rackSize * RackTile.spacing + 10;
     // We have to do this stupid dance because NineTileBoxComponent has no way of setting the corner scale.
     size = Vector2(width, rackHeight);
     cornerScale = .2;
@@ -74,7 +75,7 @@ class RackBack extends ScaledNineTileBoxComponent {
 class RackTile extends SpriteComponent {
   static double spacing = 100;
 
-  PresenceState presenceState;
+  LocalState localState;
   int index;
   late Sprite spriteTile, spriteSlot;
   late TextComponent textComponent;
@@ -86,8 +87,16 @@ class RackTile extends SpriteComponent {
       color: BasicPalette.black.color,
     ),
   );
+  final TextPaint styleAssist = TextPaint(
+    style: TextStyle(
+      fontSize: 24,
+      fontFamily: 'Solway',
+      fontWeight: FontWeight.bold,
+      color: BasicPalette.white.color,
+    ),
+  );
 
-  RackTile(this.presenceState, this.index) : super(size: Vector2.all(spacing * 1.1));
+  RackTile(this.localState, this.index) : super(size: Vector2.all(spacing * 1.1));
 
   @override
   Future<void> onLoad() async {
@@ -106,7 +115,7 @@ class RackTile extends SpriteComponent {
 
   @override
   void update(double dt) {
-    final tilePresent = index < presenceState.rack.length;
+    final tilePresent = index < localState.rack.length;
     if (!tilePresent) {
       sprite = spriteSlot;
       opacity = .8;
@@ -114,13 +123,13 @@ class RackTile extends SpriteComponent {
       return;
     }
     sprite = spriteTile;
-    final letter = presenceState.rack[index];
+    final letter = localState.rack[index];
     textComponent.text = letter.toUpperCase();
     // Check if provisional.
-    int numOfLetter = presenceState.provisionalTiles.values.where((item) => item == letter).length;
+    int numOfLetter = localState.provisionalTiles.values.where((item) => item == letter).length;
     bool isProvisional = numOfLetter > 0;
     for (int i = index - 1; i >= 0; i--) {
-      if (presenceState.rack[i] == letter) {
+      if (localState.rack[i] == letter) {
         numOfLetter--;
         if (numOfLetter == 0) {
           isProvisional = false;
@@ -129,5 +138,25 @@ class RackTile extends SpriteComponent {
       }
     }
     opacity = isProvisional ? 0.5 : 1;
+    // Assist notification.
+    if (index == localState.rack.length - 1 && localState.assister != null) {
+      add(TextBoxComponentWithOpacity(
+        text: '¢${localState.assister}',
+        textRenderer: styleAssist,
+        anchor: Anchor.center,
+        align: Anchor.center,
+        position: Vector2(size.x / 2, -20),
+      )..opacity = 0
+      ..add(MoveByEffect(
+        Vector2(0, -50),
+        CurvedEffectController(3, CurveAverager([Curves.easeInOut, Curves.linear]))
+      ))..add(SequenceEffect([
+        OpacityEffect.fadeIn(EffectController(duration: 1)),
+        OpacityEffect.to(1, EffectController(duration: 1)),
+        OpacityEffect.fadeOut(EffectController(duration: 1)),
+        RemoveEffect(),
+      ])));
+      localState.assister = null;
+    }
   }
 }

@@ -40,7 +40,7 @@ class State {
     return State._(score, placedTiles);
   }
 
-  jsonAfterProvisional(PresenceState presence, List<ProvisionalWord> provisionalWords) {
+  jsonAfterProvisional(LocalState presence, List<ProvisionalWord> provisionalWords) {
     // Calculate move score.
     int moveScore = 0;
     for (ProvisionalWord provisionalWord in provisionalWords) {
@@ -65,7 +65,7 @@ class PlacedTile {
   PlacedTile(this.letter, this.username);
 }
 
-class PresenceState {
+class LocalState {
   String username;
   Point<int> cursor;
   bool cursorHorizontal;
@@ -73,15 +73,16 @@ class PresenceState {
   List<String> rack;
   List<double> bagDistribution;
   Map<Point<int>, String> provisionalTiles;
+  String? assister; // set to a username when another player gives you an assist tile
 
-  PresenceState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
-  factory PresenceState.newLocal(String username) {
-    final presenceState = PresenceState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
-    while (presenceState.rack.length < presenceState.rackSize) {
-      presenceState.drawTile();
+  LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
+  factory LocalState.newLocal(String username) {
+    final localState = LocalState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
+    while (localState.rack.length < localState.rackSize) {
+      localState.drawTile();
     }
-    presenceState.rack.sort();
-    return presenceState;
+    localState.rack.sort();
+    return localState;
   }
 
   drawTile() {
@@ -106,7 +107,7 @@ class PresenceState {
     }
   }
 
-  toJson() {
+  toPresenceJson() {
     final provisionalList = [];
     for (final entry in provisionalTiles.entries) {
       provisionalList.addAll([entry.key.x, entry.key.y, entry.value]);

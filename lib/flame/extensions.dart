@@ -1,5 +1,8 @@
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
+import 'package:flame/palette.dart';
 import 'package:flame/src/text/common/line_metrics.dart';
+import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 
 class ScaledNineTileBoxComponent extends NineTileBoxComponent {
@@ -42,5 +45,44 @@ class FixedHeightTextPaint extends TextPaint {
   LineMetrics getLineMetrics(String text) {
     final ret = super.getLineMetrics(text);
     return LineMetrics(left: ret.left, baseline: ret.baseline, width: ret.width, ascent: fixedHeight / 2, descent: fixedHeight / 2);
+  }
+}
+
+// courtesy of spydon: https://github.com/flame-engine/flame/issues/1013#issuecomment-1652400956
+mixin HasOpacityProvider on Component implements OpacityProvider {
+  final Paint _paint = BasicPalette.white.paint();
+  final Paint _srcOverPaint = Paint()..blendMode = BlendMode.srcOver;
+
+  @override
+  double get opacity => _paint.color.opacity;
+
+  @override
+  set opacity(double newOpacity) {
+    _paint
+      ..color = _paint.color.withOpacity(newOpacity)
+      ..blendMode = BlendMode.modulate;
+  }
+
+  @override
+  void renderTree(Canvas canvas) {
+    canvas.saveLayer(null, _srcOverPaint);
+    super.renderTree(canvas);
+    canvas.drawPaint(_paint);
+    canvas.restore();
+  }
+}
+
+class TextBoxComponentWithOpacity extends TextBoxComponent with HasOpacityProvider {
+  TextBoxComponentWithOpacity({super.text, super.textRenderer, super.boxConfig, super.align, super.pixelRatio, super.position, super.size, super.scale, super.angle, super.anchor, super.children, super.priority, super.onComplete, super.key});
+}
+
+class CurveAverager extends Curve {
+  final List<Curve> curves;
+
+  CurveAverager(this.curves);
+  
+  @override
+  double transformInternal(double t) {
+    return curves.map((c) => c.transform(t)).reduce((a, b) => a + b) / curves.length;
   }
 }

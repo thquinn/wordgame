@@ -7,6 +7,7 @@ import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
 class TileManager extends PositionComponent with HasGameRef<WordGame> {
@@ -19,13 +20,14 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
     void onMount() {
       super.onMount();
       appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
+      appState.addListener(() => update(0)); // get notified changes on the same frame they happen
     }
 
     @override
     void update(double dt) {
       if (appState.game == null) return;
       // Remove tiles.
-      final removedCoors = tiles.keys.where((coor) => !appState.game!.state.placedTiles.containsKey(coor) && !appState.presenceState!.provisionalTiles.containsKey(coor)).toList();
+      final removedCoors = tiles.keys.where((coor) => !appState.game!.state.placedTiles.containsKey(coor) && !appState.localState!.provisionalTiles.containsKey(coor)).toList();
       for (final removedCoor in removedCoors) {
         TileWrapper tile = tiles[removedCoor]!;
         tile.isVisible = false;
@@ -33,10 +35,10 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
         tiles.remove(removedCoor);
       }
       // Add tiles.
-      final tileCoors = List.from(appState.game!.state.placedTiles.keys)..addAll(appState.presenceState!.provisionalTiles.keys);
+      final tileCoors = List.from(appState.game!.state.placedTiles.keys)..addAll(appState.localState!.provisionalTiles.keys);
       for (final coor in tileCoors) {
         if (!tiles.containsKey(coor)) {
-          TileWrapper tile = TileWrapper(coor);
+          TileWrapper tile = TileWrapper(appState, coor);
           add(tile);
           tiles[coor] = tile;
         }
@@ -48,7 +50,7 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
 }
 
 class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility {
-  late WordGameState appState;
+  final WordGameState appState;
   Point<int> coor;
   late Tile tile;
 
@@ -74,7 +76,7 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
   }
   static List<Vector2> clippingPoints = makeClippingPoints();
 
-  TileWrapper(this.coor) : super.polygon(
+  TileWrapper(this.appState, this.coor) : super.polygon(
     position: Vector2(coor.x.toDouble(), coor.y.toDouble()),
     points: clippingPoints,
     size: Vector2(1, 1),
@@ -83,28 +85,25 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    tile = Tile(coor);
+    tile = Tile(appState, coor);
     add(tile);
   }
 
   @override
   void onMount() {
-    super.onMount();
-    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     transform.position = Vector2(coor.x.toDouble(), coor.y.toDouble());
-    update(0);
   }
 
   @override void render(Canvas canvas) {
-    //if (tile.lift > 0) {
+    if (tile.lift > 0) {
       super.render(canvas);
-    //}
+    }
   }
 }
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
   TileState tileState = TileState.unknown;
-  late WordGameState appState;
+  final WordGameState appState;
   Point<int> coor;
   late TextComponent textComponent;
   late Sprite spriteTile, spriteTilePlaced, spriteProvisional;
@@ -125,7 +124,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     ),
   );
 
-  Tile(this.coor) : super(size: Vector2.all(1));
+  Tile(this.appState, this.coor) : super(size: Vector2.all(1));
 
   @override
   Future<void> onLoad() async {
@@ -134,7 +133,9 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     spriteProvisional = await Sprite.load('tile_outline.png');
     sprite = spriteTile;
     anchor = Anchor(.5, .5);
+    final letter = appState.localState!.provisionalTiles.containsKey(coor) ? appState.localState!.provisionalTiles[coor] : appState.game!.state.placedTiles[coor]!.letter;
     textComponent = TextBoxComponent(
+      text: letter,
       textRenderer: styleTile,
       position: Vector2(-1, -1),
       align: Anchor.center,
@@ -142,19 +143,14 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       pixelRatio: 200,
       priority: 1,
     );
+    update(0);
     add(textComponent);
   }
 
   @override
-  void onMount() {
-    super.onMount();
-    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
-    update(0);
-  }
-
-  @override
   void update(double dt) {
-    TileState newState = appState.presenceState!.provisionalTiles.containsKey(coor) ? TileState.provisional : TileState.played;
+    LocalState localState = appState.localState!;
+    TileState newState = localState.provisionalTiles.containsKey(coor) ? TileState.provisional : TileState.played;
     if (newState != tileState) {
       if (newState == TileState.played && TileManager.updates > 20) {
         lift = 1;
@@ -165,7 +161,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       sprite = tileState == TileState.provisional ? spriteProvisional : lift > 0 ? spriteTile : spriteTilePlaced;
       textComponent.textRenderer = tileState == TileState.provisional ? styleProvisional : styleTile;
     }
-    final letter = tileState == TileState.provisional ? appState.presenceState?.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
+    final letter = tileState == TileState.provisional ? localState.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
     textComponent.text = letter?.toUpperCase() ?? '';
     // Placement animation.
     if (lift > 0) {

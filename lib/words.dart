@@ -41,22 +41,22 @@ class Words {
   static List<ProvisionalWord> getProvisionalWords(WordGameState wordGameState) {
     final List<ProvisionalWord> results = [];
     final game = wordGameState.game!;
-    final presenceState = wordGameState.presenceState!;
+    final localState = wordGameState.localState!;
     // Check horizontal and vertical words.
     for (final direction in [Point(1, 0), Point(0, 1)]) {
-      final toCheck = presenceState.provisionalTiles.keys.toList();
+      final toCheck = localState.provisionalTiles.keys.toList();
       while (toCheck.isNotEmpty) {
         String word = '';
-        final Set<String> usernames = { presenceState.username };
+        final Set<String> usernames = { localState.username };
         // Find the leftmost tile of the word.
         Point<int> point = toCheck.first;
-        while (game.state.placedTiles.containsKey(point) || presenceState.provisionalTiles.containsKey(point)) {
+        while (game.state.placedTiles.containsKey(point) || localState.provisionalTiles.containsKey(point)) {
           point -= direction;
         }
         point += direction;
         // Put the letters and usernames together.
-        while (game.state.placedTiles.containsKey(point) || presenceState.provisionalTiles.containsKey(point)) {
-          word += game.state.placedTiles[point]?.letter ?? presenceState.provisionalTiles[point]!;
+        while (game.state.placedTiles.containsKey(point) || localState.provisionalTiles.containsKey(point)) {
+          word += game.state.placedTiles[point]?.letter ?? localState.provisionalTiles[point]!;
           if (game.state.placedTiles.containsKey(point)) {
             usernames.add(game.state.placedTiles[point]!.username);
           }

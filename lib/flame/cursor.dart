@@ -27,8 +27,8 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
 
   @override
   void update(double dt) {
-    transform.position = Vector2(appState.presenceState!.cursor.x.toDouble(), appState.presenceState!.cursor.y.toDouble());
-    transform.angleDegrees = appState.presenceState!.cursorHorizontal ? 0 : 90;
+    transform.position = Vector2(appState.localState!.cursor.x.toDouble(), appState.localState!.cursor.y.toDouble());
+    transform.angleDegrees = appState.localState!.cursorHorizontal ? 0 : 90;
   }
 
   @override
@@ -37,14 +37,14 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     final keyDownOrRepeat = keyDown || event is KeyRepeatEvent;
     // Change cursor direction.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.tab) {
-      appState.presenceState!.cursorHorizontal = !appState.presenceState!.cursorHorizontal;
+      appState.localState!.cursorHorizontal = !appState.localState!.cursorHorizontal;
       return false;
     }
     // Move cursor.
     if (keyDownOrRepeat && !keysPressed.contains(LogicalKeyboardKey.shiftLeft) && !keysPressed.contains(LogicalKeyboardKey.shiftRight)) {
       final inputX = event.logicalKey == LogicalKeyboardKey.arrowLeft ? -1 : event.logicalKey == LogicalKeyboardKey.arrowRight ? 1 : 0;
       final inputY = event.logicalKey == LogicalKeyboardKey.arrowUp ? -1 : event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : 0;
-      appState.moveCursorTo(appState.presenceState!.cursor + Point<int>(inputX, inputY));
+      appState.moveCursorTo(appState.localState!.cursor + Point<int>(inputX, inputY));
     }
     // Placing tiles.
     if (event.character != null && 'abcdefghijklmnopqrstuvwxyz'.contains(event.character!)) {
@@ -61,6 +61,11 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     // DEBUG: Start a new game.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f2) {
       appState.startGame();
+      return false;
+    }
+    // DEBUG: Show assist text.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.f3) {
+      appState.localState!.assister = 'swarrizard';
       return false;
     }
     return true;

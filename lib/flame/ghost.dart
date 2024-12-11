@@ -31,7 +31,7 @@ class GhostManager extends PositionComponent with HasGameRef<WordGame> {
       // Adding ghosts.
       for (final presence in appState.channel!.presenceState()) {
         final username = presence.presences[0].payload['username'];
-        if (username == appState.presenceState!.username) continue;
+        if (username == appState.localState!.username) continue;
         if (!ghosts.containsKey(username)) {
           print('Creating ghost for user $username');
           Ghost ghost = Ghost(username);
