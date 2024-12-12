@@ -184,7 +184,7 @@ class WordGameState extends ChangeNotifier {
     // Check for word legality.
     final provisionalWords = Words.getProvisionalWords(this);
     if (provisionalWords.any((w) => !Words.isLegal(w.word))) {
-      //return;
+      return;
     }
     // Play.
     final version = game!.version;
