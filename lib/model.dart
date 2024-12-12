@@ -68,6 +68,8 @@ class PlacedTile {
 }
 
 class LocalState {
+  static const int PARTIAL_REFILL = 5;
+
   String username;
   Point<int> cursor;
   bool cursorHorizontal;
@@ -79,7 +81,7 @@ class LocalState {
 
   LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(username, Point(0, 0), true, 7, [], List<double>.from(Words.letterDistribution), {});
+    final localState = LocalState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
     localState.reset();
     return localState;
   }
@@ -87,13 +89,11 @@ class LocalState {
   reset() {
     cursor = Point(0, 0);
     cursorHorizontal = true;
-    rackSize = 7;
+    rackSize = 10;
     rack = [];
     bagDistribution = List<double>.from(Words.letterDistribution);
     provisionalTiles.clear();
-    while (rack.length < 4) {
-      drawTile();
-    }
+    partiallyFillRackIfEmpty();
     rack.sort();
   }
 
@@ -121,6 +121,14 @@ class LocalState {
   refillBag() {
     for (int i = 0; i < bagDistribution.length; i++) {
       bagDistribution[i] += Words.letterDistribution[i];
+    }
+  }
+
+  partiallyFillRackIfEmpty() {
+    if (rack.isEmpty) {
+      while (rack.length < PARTIAL_REFILL) {
+        drawTile();
+      }
     }
   }
 

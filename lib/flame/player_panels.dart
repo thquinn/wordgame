@@ -46,7 +46,7 @@ class TeamPanels extends PositionComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
-    final List<String> usernames = appState.channel!.presenceState().map((e) => e.presences.first.payload['username'] as String).toList();
+    final List<String> usernames = appState.channel!.presenceState().map((e) => e.presences.first.payload['username']).where((e) => e != null).cast<String>().toList();
     usernames.sort();
     textbox.text = usernames.join('\n');
   }

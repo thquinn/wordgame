@@ -14,6 +14,7 @@ analyzer:
     todo: ignore
     implementation_imports: ignore
     empty_catches: ignore
+    constant_identifier_names: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the

@@ -186,6 +186,7 @@ class WordGameState extends ChangeNotifier {
       for (final letter in provisionalTiles.values) {
         localState!.rack.remove(letter);
       }
+      localState!.partiallyFillRackIfEmpty();
       provisionalTiles.clear();
       await channel!.track(localState!.toPresenceJson());
       // Broadcasts.
