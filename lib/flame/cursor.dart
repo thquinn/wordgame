@@ -34,7 +34,8 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     final keyDown = event is KeyDownEvent;
-    final keyDownOrRepeat = keyDown || event is KeyRepeatEvent;
+    final keyRepeat = event is KeyRepeatEvent;
+    final keyDownOrRepeat = keyDown || keyRepeat;
     // Change cursor direction.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.tab) {
       appState.localState!.cursorHorizontal = !appState.localState!.cursorHorizontal;
@@ -53,6 +54,10 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     // Deleting.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.backspace) {
       appState.retreatCursorAndDelete();
+    }
+    // Delete all.
+    if (keyRepeat && event.logicalKey == LogicalKeyboardKey.backspace) {
+      appState.clearProvisionalTiles();
     }
     // Submitting tiles.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.enter) {

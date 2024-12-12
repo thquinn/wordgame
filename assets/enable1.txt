@@ -80877,6 +80877,7 @@ khirkahs
 khis
 khoum
 khoums
+ki
 kiang
 kiangs
 kiaugh
@@ -121397,6 +121398,7 @@ qanat
 qanats
 qat
 qats
+qi
 qindar
 qindarka
 qindars

@@ -94,9 +94,8 @@ class WordGameState extends ChangeNotifier {
       return;
     }
     // Can't place on top of an existing tile.
-    if (game!.state.placedTiles.containsKey(localState.cursor)) {
-      await advanceCursor();
-      return;
+    while (game!.state.placedTiles.containsKey(localState.cursor)) {
+      localState.cursor += Point<int>(localState.cursorHorizontal == true ? 1 : 0, localState.cursorHorizontal == true ? 0 : 1);
     }
     // Place.
     localState.provisionalTiles[localState.cursor] = letter;
@@ -168,5 +167,10 @@ class WordGameState extends ChangeNotifier {
         channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
       }
     }
+  }
+  clearProvisionalTiles() async {
+    if (!gameIsActive()) return;
+    localState!.provisionalTiles.clear();
+    await channel!.track(localState!.toPresenceJson());
   }
 }

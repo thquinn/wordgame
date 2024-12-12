@@ -6,6 +6,8 @@ import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wordgame/flame/color_matrix_hsv.dart';
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
@@ -102,6 +104,15 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
 }
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
+  static final List<ColorFilter> teammateFilters = [
+    ColorMatrixHsv.matrix(hue: 2),
+    ColorMatrixHsv.matrix(hue: 0.8, brightness: -0.05), // blue
+    ColorMatrixHsv.matrix(hue: 0.07, saturation: 0.5), // yellow
+    ColorMatrixHsv.matrix(hue: 0.5, brightness: -0.05), // teal
+    ColorMatrixHsv.matrix(hue: 0.25, saturation: 0.15), // green
+    ColorMatrixHsv.matrix(hue: -0.3, saturation: 0.25, brightness: -0.1), // rosy pink
+  ];
+
   TileState tileState = TileState.unknown;
   final WordGameState appState;
   Point<int> coor;
@@ -160,12 +171,15 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       tileState = newState;
       sprite = tileState == TileState.provisional ? spriteProvisional : lift > 0 ? spriteTile : spriteTilePlaced;
       textComponent.textRenderer = tileState == TileState.provisional ? styleProvisional : styleTile;
+      if (tileState == TileState.played) {
+        paint.colorFilter = teammateFilters[0];
+      }
     }
     final letter = tileState == TileState.provisional ? localState.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
     textComponent.text = letter?.toUpperCase() ?? '';
     // Placement animation.
     if (lift > 0) {
-      lift = max(lift - dt * 3, 0);
+      lift = max(lift - dt * 2, 0);
       position = Vector2(0, Curves.easeInOutCubic.transform(lift) * -.5);
       if (lift == 0) {
         sprite = spriteTilePlaced;

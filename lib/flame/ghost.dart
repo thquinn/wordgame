@@ -64,13 +64,12 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
   Future<void> onLoad() async {
     position = Vector2(0, 1);
     final boxSprite = await Sprite.load('ghost.png');
-    boxComponent = ScaledNineTileBoxComponent();
+    boxComponent = ScaledNineTileBoxComponent(.005);
     boxComponent.nineTileBox = AlphaNineTileBox(boxSprite, opacity: 0.1, leftWidth: 75, rightWidth: 75, topHeight: 127, bottomHeight: 127);
     boxComponent.position = Vector2(0, -.75);
     boxComponent.anchor = Anchor(.5, 0);
     boxComponent.size = Vector2(2, 1);
     boxComponent.scale = Vector2(1, 1);
-    boxComponent.cornerScale = .005;
     add(boxComponent);
     textComponent = TextBoxComponent(
       textRenderer: textPaint,

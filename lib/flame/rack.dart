@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/layout.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
     for (int i = 0; i < localState.rackSize; i++) {
       add(RackTile(localState, i));
     }
+    add(RackCooldown(localState, this));
   }
 
   @override
@@ -58,7 +60,7 @@ class RackBack extends ScaledNineTileBoxComponent {
 
   LocalState localState;
 
-  RackBack(this.localState);
+  RackBack(this.localState) : super(.2);
 
   @override
   Future<void> onLoad() async {
@@ -67,7 +69,6 @@ class RackBack extends ScaledNineTileBoxComponent {
     final width = localState.rackSize * RackTile.spacing + 10;
     // We have to do this stupid dance because NineTileBoxComponent has no way of setting the corner scale.
     size = Vector2(width, rackHeight);
-    cornerScale = .2;
     super.onLoad();
   }
 }
@@ -123,6 +124,7 @@ class RackTile extends SpriteComponent {
       return;
     }
     sprite = spriteTile;
+    
     final letter = localState.rack[index];
     textComponent.text = letter.toUpperCase();
     // Check if provisional.
@@ -158,5 +160,71 @@ class RackTile extends SpriteComponent {
       ])));
       localState.assister = null;
     }
+  }
+}
+
+class RackCooldown extends PositionComponent with HasVisibility {
+  static final TextPaint styleLabel = TextPaint(
+    style: TextStyle(
+      fontSize: 36,
+      fontFamily: 'Katahdin Round Dekerned',
+      color: BasicPalette.white.color,
+    ),
+  );
+
+  final LocalState localState;
+  final Rack rack;
+  late TextBoxComponent label;
+
+  RackCooldown(this.localState, this.rack);
+
+  @override
+  FutureOr<void> onLoad() {
+    add(RackCooldownCircle(rack));
+    add(label = TextBoxComponent(
+      textRenderer: styleLabel,
+      anchor: Anchor.center,
+      align: Anchor.center,
+      size: Vector2.all(200),
+    ));
+  }
+
+  @override
+  void update(double dt) {
+    isVisible = localState.rack.length < localState.rackSize;
+    position = Vector2(localState.rack.length * RackTile.spacing + RackBack.rackHeight / 2 + 2, RackBack.rackHeight / 2);
+    label.text = (rack.tileTimer.y - rack.tileTimer.x).ceil().toString();
+  }
+}
+
+class RackCooldownCircle extends ClipComponent {
+  final Rack rack;
+
+  RackCooldownCircle(this.rack) : super.circle(size: Vector2.all(75));
+
+  @override
+  Future<void> onLoad() async {
+    final spriteCircle = await Sprite.load('circle.png');
+    add(SpriteComponent(
+      sprite: spriteCircle,
+      size: size,
+      anchor: Anchor.center,
+    )..opacity = .2);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final percent = rack.tileTimer.x / rack.tileTimer.y;
+    final points = [
+      Vector2(0, 0),
+      Vector2(0, -size.x),
+      if (percent > .125) Vector2(size.x, -size.x),
+      if (percent > .375) Vector2(size.x, size.x),
+      if (percent > .625) Vector2(-size.x, size.x),
+      if (percent > .875) Vector2(-size.x, -size.x),
+    ];
+    final radians = percent * 2 * pi;
+    points.add(Vector2(sin(radians), -cos(radians)) * size.x * 2);
+    canvas.clipPath(Polygon(points).asPath());
   }
 }

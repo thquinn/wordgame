@@ -8,9 +8,10 @@ class Game {
   final String channel;
   final State state;
   final bool active;
+  final DateTime endsAt;
   final int version;
 
-  Game(this.id, this.channel, this.state, this.active, this.version);
+  Game(this.id, this.channel, this.state, this.active, this.endsAt, this.version);
   static Game? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
     return Game(
@@ -18,6 +19,7 @@ class Game {
       json['channel'] as String,
       State(json['state']),
       json['active'] as bool,
+      DateTime.parse(json['ends_at']),
       json['version'] as int,
     );
   }
@@ -77,8 +79,8 @@ class LocalState {
 
   LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
-    while (localState.rack.length < localState.rackSize) {
+    final localState = LocalState(username, Point(0, 0), true, 7, [], List<double>.from(Words.letterDistribution), {});
+    while (localState.rack.length < 4) {
       localState.drawTile();
     }
     localState.rack.sort();
