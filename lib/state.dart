@@ -170,6 +170,7 @@ class WordGameState extends ChangeNotifier {
   }
   clearProvisionalTiles() async {
     if (!gameIsActive()) return;
+    if (localState!.provisionalTiles.isEmpty) return;
     localState!.provisionalTiles.clear();
     await channel!.track(localState!.toPresenceJson());
   }

@@ -104,8 +104,19 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
   static final List<ColorFilter> teammateFilters = [
-    ColorMatrixHSVC.make(contrast: 2),
+    ColorMatrixHSVC.make(hue: 0.45, brightness: -0.2), // blue
+    ColorMatrixHSVC.make(hue: 0.15, saturation: 1.2), // green
+    ColorMatrixHSVC.make(hue: -0.15, brightness: -0.33), // dull red
+    ColorMatrixHSVC.make(hue: -0.4, saturation: 2, brightness: -0.3), // purple
+    ColorMatrixHSVC.make(hue: -0.2, saturation: 2), // pink
+    ColorMatrixHSVC.make(hue: 0.02, saturation: 2.5), // yellow
+    ColorMatrixHSVC.make(hue: 0.5, saturation: 2, brightness: 0.3), // ice blue
+    ColorMatrixHSVC.make(hue: -.05, saturation: 2.5), // orange
+    ColorMatrixHSVC.make(saturation: 0, brightness: .2), // light gray
+    ColorMatrixHSVC.make(hue: 0.33, saturation: 0.7), // teal
+    ColorMatrixHSVC.make(hue: -0.125, saturation: 3, brightness: -0.1), // peach
   ];
+  static final Map<String, int> teammateFilterIndices = {};
 
   TileState tileState = TileState.unknown;
   final WordGameState appState;
@@ -155,18 +166,30 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
   @override
   void update(double dt) {
     LocalState localState = appState.localState!;
-    TileState newState = localState.provisionalTiles.containsKey(coor) ? TileState.provisional : TileState.played;
+    TileState newState = localState.provisionalTiles.containsKey(coor) ? TileState.provisional : appState.game!.state.placedTiles.containsKey(coor) ? TileState.played : TileState.removed;
+    if (newState == TileState.removed) {
+      return;
+    }
     if (newState != tileState) {
-      if (newState == TileState.played && TileManager.updates > 20) {
+      tileState = newState;
+      // Start placement animation.
+      if (tileState == TileState.played && TileManager.updates > 20) {
         lift = 1;
         opacity = 0;
         add(OpacityEffect.fadeIn(EffectController(duration: .25)));
       }
-      tileState = newState;
+      // Set sprite and text.
       sprite = tileState == TileState.provisional ? spriteProvisional : lift > 0 ? spriteTile : spriteTilePlaced;
       textComponent.textRenderer = tileState == TileState.provisional ? styleProvisional : styleTile;
+      // Teammate colors.
       if (tileState == TileState.played) {
-        paint.colorFilter = teammateFilters[0];
+        PlacedTile placed = appState.game!.state.placedTiles[coor]!;
+        if (placed.username != appState.localState!.username) {
+          if (!teammateFilterIndices.containsKey(placed.username)) {
+            teammateFilterIndices[placed.username] = teammateFilterIndices.length % teammateFilters.length;
+          }
+          paint.colorFilter = teammateFilters[teammateFilterIndices[placed.username]!];
+        }
       }
     }
     final letter = tileState == TileState.provisional ? localState.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
@@ -182,4 +205,4 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
   }
 }
 
-enum TileState { unknown, provisional, played }
+enum TileState { unknown, provisional, played, removed }

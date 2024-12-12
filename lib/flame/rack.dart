@@ -26,7 +26,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
 
   Rack() : super(size: Vector2(1000, RackBack.rackHeight)) {
     renderShape = false;
-    tileTimer = Point(0, 4);
+    tileTimer = Point(0, 5);
   }
 
   @override
