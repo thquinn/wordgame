@@ -6,8 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wordgame/flame/color_matrix_hsv.dart';
-import 'package:wordgame/flame/extensions.dart';
+import 'package:wordgame/flame/color_matrix_hsvc.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
@@ -105,12 +104,7 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
   static final List<ColorFilter> teammateFilters = [
-    ColorMatrixHsv.matrix(hue: 2),
-    ColorMatrixHsv.matrix(hue: 0.8, brightness: -0.05), // blue
-    ColorMatrixHsv.matrix(hue: 0.07, saturation: 0.5), // yellow
-    ColorMatrixHsv.matrix(hue: 0.5, brightness: -0.05), // teal
-    ColorMatrixHsv.matrix(hue: 0.25, saturation: 0.15), // green
-    ColorMatrixHsv.matrix(hue: -0.3, saturation: 0.25, brightness: -0.1), // rosy pink
+    ColorMatrixHSVC.make(contrast: 2),
   ];
 
   TileState tileState = TileState.unknown;

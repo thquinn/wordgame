@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
@@ -88,31 +86,5 @@ class CurveAverager extends Curve {
   @override
   double transformInternal(double t) {
     return curves.map((c) => c.transform(t)).reduce((a, b) => a + b) / curves.length;
-  }
-}
-
-class HueShiftUtils {
-  static ColorFilter hueShift(double degrees) {
-    // Create a color matrix for hue rotation
-    final hueRotationMatrix = _createHueRotationMatrix(degrees);
-    return ColorFilter.matrix(hueRotationMatrix);
-  }
-
-  static List<double> _createHueRotationMatrix(double degrees) {
-    final radians = degrees * (pi / 180);
-    final c = cos(radians);
-    final s = sin(radians);
-
-    // Luminance coefficients
-    const lr = 0.213;
-    const lg = 0.715;
-    const lb = 0.072;
-
-    return [
-      lr + (c * (1 - lr)) + (s * -lr),       lg + (c * -lg) + (s * -lg),       lb + (c * -lb) + (s * (1 - lb)), 0, 0,
-      lr + (c * -lr) + (s * 0.143),          lg + (c * (1 - lg)) + (s * 0.140), lb + (c * -lb) + (s * -0.283), 0, 0,
-      lr + (c * -lr) + (s * -(1 - lr)),      lg + (c * -lg) + (s * lg),         lb + (c * (1 - lb)) + (s * lb), 0, 0,
-      0, 0, 0, 1, 0,
-    ];
   }
 }
