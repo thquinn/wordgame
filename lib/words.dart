@@ -30,7 +30,7 @@ class Words {
         total++;
       }
     }
-    letterDistribution = counts.map((c) => max(c / total, 0.01)).toList();
+    letterDistribution = counts.map((c) => max(c / total, 0.005)).toList(); // all letters should be at least 0.5% of the distribution
     debugPrint('Calculated letter distribution: ${jsonEncode(letterDistribution)}');
   }
 

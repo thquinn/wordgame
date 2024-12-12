@@ -160,18 +160,15 @@ class WordGameState extends ChangeNotifier {
     if (!provisionalTiles.keys.every((coor) => coor.x == provisionalTiles.keys.first.x) && !provisionalTiles.keys.every((coor) => coor.y == provisionalTiles.keys.first.y)) {
       return;
     }
-    // Can only play tiles connected to each other or already-played tiles.
-    final minX = provisionalTiles.keys.map((e) => e.x).reduce(min);
-    final maxX = provisionalTiles.keys.map((e) => e.x).reduce(max);
-    final minY = provisionalTiles.keys.map((e) => e.y).reduce(min);
-    final maxY = provisionalTiles.keys.map((e) => e.y).reduce(max);
-    for (int x = minX; x <= maxX; x++) {
-      for (int y = minY; y <= maxY; y++) {
-        final point = Point<int>(x, y);
-        if (!provisionalTiles.containsKey(point) && !game!.state.placedTiles.containsKey(point)) {
-          return;
-        }
-      } 
+    // If there are tiles on the board, you have to play adjacent to one.
+    final placedTiles = game!.state.placedTiles;
+    if (placedTiles.isNotEmpty && !provisionalTiles.keys.any((Point<int> coor) {
+      return placedTiles.containsKey(Point<int>(coor.x - 1, coor.y)) ||
+        placedTiles.containsKey(Point<int>(coor.x + 1, coor.y)) ||
+        placedTiles.containsKey(Point<int>(coor.x, coor.y - 1)) ||
+        placedTiles.containsKey(Point<int>(coor.x, coor.y + 1));
+    })) {
+      return;
     }
     // Check for word legality.
     final provisionalWords = Words.getProvisionalWords(this);
