@@ -6,7 +6,6 @@ import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
-import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/state.dart';
 
 class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {

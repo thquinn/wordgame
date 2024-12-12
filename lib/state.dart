@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -69,8 +70,8 @@ class WordGameState extends ChangeNotifier {
     ).subscribe();
     localState = LocalState.newLocal(username);
     channel!
-      .onBroadcast(event: 'assist', callback: onReceiveAssist)
       .onBroadcast(event: 'notification', callback: onReceiveNotification)
+      .onBroadcast(event: 'assist', callback: onReceiveAssist)
       .subscribe((status, error) async {
         if (status != RealtimeSubscribeStatus.subscribed) return;
         await channel!.track(localState!.toPresenceJson());
@@ -87,10 +88,12 @@ class WordGameState extends ChangeNotifier {
     }
   }
   onReceiveNotification(payload) {
+    print('received notif');
     final sender = payload['sender'];
     if (sender == localState!.username) return;
+    final args = Map<String, String>.from(payload['args']);
     print(payload);
-    NotificationManager.enqueueFromBroadcast(payload['type'], payload['args']);
+    NotificationManager.enqueueFromBroadcast(payload['notiftype'], args);
   }
 
   // Commands.
@@ -181,7 +184,7 @@ class WordGameState extends ChangeNotifier {
     // Check for word legality.
     final provisionalWords = Words.getProvisionalWords(this);
     if (provisionalWords.any((w) => !Words.isLegal(w.word))) {
-      return;
+      //return;
     }
     // Play.
     final version = game!.version;
@@ -203,10 +206,13 @@ class WordGameState extends ChangeNotifier {
       if (assistUsernames.isNotEmpty) {
         channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
       }
+      print('provmap');
+      print(provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]));
       for (final wordQualifierPair in provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
+        print('qual');
         channel!.sendBroadcastMessage(event: 'notification', payload: {
           'sender': localState!.username,
-          'type': 'word',
+          'notiftype': 'word',
           'args': {
             'username': localState!.username,
             'qualifier': wordQualifierPair.last,
