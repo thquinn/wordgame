@@ -6,17 +6,19 @@ import 'package:flame/parallax.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/flame/player_panels.dart';
 import 'package:wordgame/flame/rack.dart';
 import 'package:wordgame/flame/status_panels.dart';
 
 class WordCamera extends CameraComponent with KeyboardHandler {
-  double zoom = 10;
+  double zoom = 15;
   double inputX = 0, inputY = 0, inputZoom = 0;
 
   WordCamera() : super() {
     backdrop.add(ParallaxGrid());
     viewport.add(RackAnchor());
     viewport.add(StatusAnchor());
+    viewport.add(TeamAnchor());
     viewport.add(FpsTextComponent());
   }
 

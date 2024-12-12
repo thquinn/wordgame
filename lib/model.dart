@@ -80,16 +80,29 @@ class LocalState {
   LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
     final localState = LocalState(username, Point(0, 0), true, 7, [], List<double>.from(Words.letterDistribution), {});
-    while (localState.rack.length < 4) {
-      localState.drawTile();
-    }
-    localState.rack.sort();
+    localState.reset();
     return localState;
+  }
+
+  reset() {
+    cursor = Point(0, 0);
+    cursorHorizontal = true;
+    rackSize = 7;
+    rack = [];
+    bagDistribution = List<double>.from(Words.letterDistribution);
+    provisionalTiles.clear();
+    while (rack.length < 4) {
+      drawTile();
+    }
+    rack.sort();
   }
 
   drawTile() {
     if (rack.length >= rackSize) return;
+    print('about to calculate total weight of bag');
+    print(bagDistribution);
     final totalWeight = bagDistribution.reduce((a, b) => a + b);
+    print('totalweight is $totalWeight');
     double selector = Util.random.nextDouble() * totalWeight;
     for (int i = 0; i < bagDistribution.length; i++) {
       selector -= bagDistribution[i];

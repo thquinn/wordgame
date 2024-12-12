@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
@@ -7,15 +8,24 @@ import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/state.dart';
 
-class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler {
+class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {
   late WordGameState appState;
+  late SpriteComponent arrow;
 
-  Cursor() : super(size: Vector2.all(2));
+  Cursor() : super(size: Vector2.all(2), anchor: Anchor.center, paint: Paint()..filterQuality = FilterQuality.high,);
 
   @override
   Future<void> onLoad() async {
     sprite = await Sprite.load('cursor.png');
-    anchor = Anchor(.5, .5);
+    final spriteArrow = await Sprite.load('cursor_arrow.png');
+    arrow = SpriteComponent(
+      sprite: spriteArrow,
+      position: Vector2(1, .933),
+      size: Vector2.all(2),
+      anchor: Anchor.center,
+      paint: Paint()..filterQuality = FilterQuality.high,
+    );
+    add(arrow);
     priority = 2;
   }
 
@@ -27,8 +37,9 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
 
   @override
   void update(double dt) {
+    isVisible = appState.hasGame();
     transform.position = Vector2(appState.localState!.cursor.x.toDouble(), appState.localState!.cursor.y.toDouble());
-    transform.angleDegrees = appState.localState!.cursorHorizontal ? 0 : 90;
+    arrow.transform.angleDegrees = appState.localState!.cursorHorizontal ? 0 : 90;
   }
 
   @override
@@ -61,7 +72,11 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler 
     }
     // Submitting tiles.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.enter) {
-      appState.playProvisionalTiles();
+      appState.confirmProvisionalTiles();
+    }
+    // Sort rack.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.digit1) {
+      appState.localState!.rack.sort();
     }
     // DEBUG: Start a new game.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f2) {

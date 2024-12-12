@@ -140,7 +140,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     ),
   );
 
-  Tile(this.appState, this.coor) : super(size: Vector2.all(1));
+  Tile(this.appState, this.coor) : super(size: Vector2.all(1), paint: Paint()..filterQuality = FilterQuality.high);
 
   @override
   Future<void> onLoad() async {

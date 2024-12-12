@@ -21,6 +21,7 @@ class RackAnchor extends AlignComponent {
 }
 
 class Rack extends RectangleComponent with HasGameRef<WordGame> {
+  late WordGameState appState;
   late LocalState localState;
   late Point<double> tileTimer;
 
@@ -32,7 +33,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
   @override
   void onMount() {
     super.onMount();
-    final appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
+    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     localState = appState.localState!;
     add(RackBack(localState));
     for (int i = 0; i < localState.rackSize; i++) {
@@ -43,6 +44,10 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
+    if (!appState.gameIsActive()) {
+      tileTimer = Point(0, 5);
+      return;
+    }
     if (localState.rack.length >= localState.rackSize) {
       tileTimer = Point(0, tileTimer.y);
     } else {
@@ -81,14 +86,14 @@ class RackTile extends SpriteComponent {
   late Sprite spriteTile, spriteSlot;
   late TextComponent textComponent;
 
-  final TextPaint styleTile = TextPaint(
+  static final TextPaint styleTile = TextPaint(
     style: TextStyle(
       fontSize: 72,
       fontFamily: 'Katahdin Round Dekerned',
       color: BasicPalette.black.color,
     ),
   );
-  final TextPaint styleAssist = TextPaint(
+  static final TextPaint styleAssist = TextPaint(
     style: TextStyle(
       fontSize: 24,
       fontFamily: 'Solway',

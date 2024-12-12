@@ -15,14 +15,17 @@ class WordGameState extends ChangeNotifier {
   isConnected() {
     return roomID != null && channel != null && localState != null;
   }
-  gameIsActive() {
+  hasGame() {
     return isConnected() && game != null;
+  }
+  gameIsActive() {
+    return hasGame() && game!.active && game!.endsAt.isAfter(DateTime.now());
   }
 
   connect(String roomID, String username) {
     this.roomID = roomID;
     channel = Supabase.instance.client.channel(roomID);
-    Supabase.instance.client.from('games').select().eq('channel', roomID).maybeSingle().then((value) {
+    Supabase.instance.client.from('games').select().eq('channel', roomID).eq('active', true).maybeSingle().then((value) {
       game = Game.fromJson(value);
       notifyListeners();
     });
@@ -31,8 +34,24 @@ class WordGameState extends ChangeNotifier {
       schema: 'public',
       table: 'games',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
-      callback: (payload) {
-        game = Game.fromJson(payload.newRecord);
+      callback: (payload) async {
+        final updatedGame = Game.fromJson(payload.newRecord);
+        if (game != null && game!.id != updatedGame!.id) {
+          // A new game has started.
+          localState!.reset();
+          await channel!.track(localState!.toPresenceJson());
+        }
+        game = updatedGame;
+        if (gameIsActive()) {
+          for (final coor in game!.state.placedTiles.keys) {
+            if (localState!.provisionalTiles.containsKey(coor)) {
+              clearProvisionalTiles();
+              break;
+            }
+          }
+        } else {
+          clearProvisionalTiles();
+        }
         notifyListeners();
       },
     ).subscribe();
@@ -69,6 +88,18 @@ class WordGameState extends ChangeNotifier {
   // Commands.
   startGame() async {
     if (!isConnected()) return;
+    if (gameIsActive()) return;
+    // Finish existing game.
+    if (game != null) {
+      final version = game!.version;
+      final result = await Supabase.instance.client.from('games').update({
+        'active': false
+      }).eq('channel', roomID!).eq('version', version).eq('active', true).select().maybeSingle();
+      if (result == null) {
+        return;
+      }
+    }
+    // Start new game from waiting room.
     try {
       await Supabase.instance.client.from('games').insert({
         'channel': roomID,
@@ -80,7 +111,7 @@ class WordGameState extends ChangeNotifier {
   }
 
   moveCursorTo(Point<int> coor) async {
-    if (!gameIsActive()) return;
+    if (!hasGame()) return;
     localState!.cursor = coor;
     await channel!.track(localState!.toPresenceJson());
   }
@@ -121,7 +152,7 @@ class WordGameState extends ChangeNotifier {
     localState!.provisionalTiles.remove(localState!.cursor);
     await channel!.track(localState!.toPresenceJson());
   }
-  playProvisionalTiles() async {
+  confirmProvisionalTiles() async {
     if (!gameIsActive()) return;
     final provisionalTiles = localState!.provisionalTiles;
     if (provisionalTiles.isEmpty) return;
@@ -152,7 +183,7 @@ class WordGameState extends ChangeNotifier {
     final result = await Supabase.instance.client.from('games').update({
       'state': game!.state.jsonAfterProvisional(localState!, provisionalWords),
       'version': version + 1,
-    }).eq('channel', roomID!).eq('version', version).select().maybeSingle();
+    }).eq('channel', roomID!).eq('version', version).eq('active', true).select().maybeSingle();
     if (result != null) {
       // Finalize move.
       for (final letter in provisionalTiles.values) {
