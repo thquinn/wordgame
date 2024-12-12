@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/state.dart';
 
 class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {
@@ -86,6 +87,19 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     // DEBUG: Show assist text.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f3) {
       appState.localState!.assister = 'swarrizard';
+      return false;
+    }
+    // DEBUG: Show notification.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.f4) {
+      appState.onReceiveNotification({
+        'sender': 'swarrizard',
+        'type': 'word',
+        'args': {
+          'username': 'swarrizard',
+          'qualifier': '7-letter quintacolor',
+          'word': 'SUAVE',
+        },
+      });
       return false;
     }
     return true;

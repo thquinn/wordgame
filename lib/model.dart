@@ -101,8 +101,10 @@ class LocalState {
     if (rack.length >= rackSize) return;
     print('about to calculate total weight of bag');
     print(bagDistribution);
+    print(Words.wordSet.length);
     print('static letter dist is');
     print(Words.letterDistribution);
+    print(Words.wordSet.length);
     final totalWeight = bagDistribution.reduce((a, b) => a + b);
     print('totalweight is $totalWeight');
     double selector = Util.random.nextDouble() * totalWeight;

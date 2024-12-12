@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/words.dart';
 
 import 'model.dart';
@@ -69,6 +70,7 @@ class WordGameState extends ChangeNotifier {
     localState = LocalState.newLocal(username);
     channel!
       .onBroadcast(event: 'assist', callback: onReceiveAssist)
+      .onBroadcast(event: 'notification', callback: onReceiveNotification)
       .subscribe((status, error) async {
         if (status != RealtimeSubscribeStatus.subscribed) return;
         await channel!.track(localState!.toPresenceJson());
@@ -83,6 +85,12 @@ class WordGameState extends ChangeNotifier {
       localState!.drawTile();
       localState!.assister = payload['sender'];
     }
+  }
+  onReceiveNotification(payload) {
+    final sender = payload['sender'];
+    if (sender == localState!.username) return;
+    print(payload);
+    NotificationManager.enqueueFromBroadcast(payload['type'], payload['args']);
   }
 
   // Commands.
@@ -194,6 +202,17 @@ class WordGameState extends ChangeNotifier {
       assistUsernames.remove(localState!.username);
       if (assistUsernames.isNotEmpty) {
         channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
+      }
+      for (final wordQualifierPair in provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
+        channel!.sendBroadcastMessage(event: 'notification', payload: {
+          'sender': localState!.username,
+          'type': 'word',
+          'args': {
+            'username': localState!.username,
+            'qualifier': wordQualifierPair.last,
+            'word': wordQualifierPair.first,
+          }
+        });
       }
     }
   }

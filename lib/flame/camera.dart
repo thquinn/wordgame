@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/flame/player_panels.dart';
 import 'package:wordgame/flame/rack.dart';
 import 'package:wordgame/flame/parallax_painter.dart';
@@ -19,6 +20,7 @@ class WordCamera extends CameraComponent with KeyboardHandler {
     viewport.add(RackAnchor());
     viewport.add(StatusAnchor());
     viewport.add(TeamAnchor());
+    viewport.add(NotificationManager());
     viewport.add(FpsTextComponent());
   }
 
@@ -36,10 +38,10 @@ class WordCamera extends CameraComponent with KeyboardHandler {
 
   @override
   void update(double dt) {
-    viewfinder.position += Vector2(inputX, inputY) * 10 * dt;
     zoom /= pow(4, dt * inputZoom);
-    zoom = zoom.clamp(6, 40);
+    zoom = zoom.clamp(8, 40);
     viewfinder.visibleGameSize = Vector2(zoom, zoom);
+    viewfinder.position += Vector2(inputX, inputY) * 3 * sqrt(zoom) * dt;
   }
 }
 

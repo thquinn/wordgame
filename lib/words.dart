@@ -73,6 +73,8 @@ class Words {
 }
 
 class ProvisionalWord {
+  static final List<String?> COLOR_QUALIFIERS = [null, null, null, 'tricolor', 'tetracolor', 'quintacolor', 'hexacolor', 'heptacolor', 'octacolor', 'enneacolor', 'decacolor', 'polycolor'];
+
   final String word;
   final List<String> usernames;
 
@@ -81,5 +83,14 @@ class ProvisionalWord {
   int score() {
     int baseScore = word.split('').map((char) => Words.letterValues[char] ?? 0).reduce((sum, value) => sum + value);
     return baseScore * usernames.length;
+  }
+
+  String? getNotificationQualifier() {
+    String? lengthQualifier = word.length >= 8 ? '${word.length}-letter' : null;
+    String? colorQualifier = COLOR_QUALIFIERS[min(usernames.length, COLOR_QUALIFIERS.length - 1)];
+    if (lengthQualifier != null && colorQualifier != null) return '$lengthQualifier $colorQualifier';
+    if (lengthQualifier != null) return lengthQualifier;
+    if (colorQualifier != null) return colorQualifier;
+    return null;
   }
 }
