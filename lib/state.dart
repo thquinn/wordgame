@@ -24,6 +24,7 @@ class WordGameState extends ChangeNotifier {
   }
 
   connect(String roomID, String username) {
+    roomID = roomID.toLowerCase();
     this.roomID = roomID;
     channel = Supabase.instance.client.channel(roomID);
     Supabase.instance.client.from('games').select().eq('channel', roomID).eq('active', true).maybeSingle().then((value) {
@@ -82,7 +83,7 @@ class WordGameState extends ChangeNotifier {
   onReceiveAssist(payload) {
     final usernames = List<String>.from(payload['usernames'] as List);
     if (usernames.contains(localState!.username)) {
-      localState!.drawTile();
+      localState!.drawTile(overflow: true);
       localState!.assister = payload['sender'];
     }
   }
@@ -197,6 +198,7 @@ class WordGameState extends ChangeNotifier {
         localState!.rack.remove(letter);
       }
       localState!.partiallyFillRackIfEmpty();
+      localState!.spendOverflowTiles();
       provisionalTiles.clear();
       await channel!.track(localState!.toPresenceJson());
       // Broadcasts.

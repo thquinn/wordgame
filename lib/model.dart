@@ -75,13 +75,14 @@ class LocalState {
   bool cursorHorizontal;
   int rackSize;
   List<String> rack;
+  int overflowTiles;
   List<double> bagDistribution;
   Map<Point<int>, String> provisionalTiles;
   String? assister; // set to a username when another player gives you an assist tile
 
-  LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.bagDistribution, this.provisionalTiles);
+  LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.overflowTiles, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(username, Point(0, 0), true, 10, [], List<double>.from(Words.letterDistribution), {});
+    final localState = LocalState(username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
     localState.reset();
     return localState;
   }
@@ -91,14 +92,20 @@ class LocalState {
     cursorHorizontal = true;
     rackSize = 10;
     rack = [];
+    overflowTiles = 0;
     bagDistribution = List<double>.from(Words.letterDistribution);
     provisionalTiles.clear();
     partiallyFillRackIfEmpty();
     rack.sort();
   }
 
-  drawTile() {
-    if (rack.length >= rackSize) return;
+  drawTile({bool overflow = false}) {
+    if (rack.length >= rackSize) {
+      if (overflow) {
+        overflowTiles++;
+      }
+      return;
+    }
     print('about to calculate total weight of bag');
     print(bagDistribution);
     print(Words.wordSet.length);
@@ -131,6 +138,12 @@ class LocalState {
       while (rack.length < PARTIAL_REFILL) {
         drawTile();
       }
+    }
+  }
+  spendOverflowTiles() {
+    while (rack.length < rackSize && overflowTiles > 0) {
+      drawTile();
+      overflowTiles--;
     }
   }
 

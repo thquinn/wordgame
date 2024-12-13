@@ -101,6 +101,11 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
       });
       return false;
     }
+    // DEBUG: Gain overflow tile.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.f6) {
+      appState.localState!.overflowTiles++;
+      return false;
+    }
     return true;
   }
 }

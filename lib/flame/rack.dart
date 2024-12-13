@@ -40,6 +40,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
       add(RackTile(localState, i));
     }
     add(RackCooldown(localState, this));
+    add(RackOverflowCounter(localState));
   }
 
   @override
@@ -147,12 +148,13 @@ class RackTile extends SpriteComponent {
     opacity = isProvisional ? 0.5 : 1;
     // Assist notification.
     if (index == localState.rack.length - 1 && localState.assister != null) {
+      final x = size.x / 2 + (localState.overflowTiles > 0 ? spacing : 0) - 3;
       add(TextBoxComponentWithOpacity(
         text: '¢${localState.assister}',
         textRenderer: styleAssist,
         anchor: Anchor.center,
         align: Anchor.center,
-        position: Vector2(size.x / 2, -20),
+        position: Vector2(x, -20),
       )..opacity = 0
       ..add(MoveByEffect(
         Vector2(0, -50),
@@ -231,5 +233,37 @@ class RackCooldownCircle extends ClipComponent {
     final radians = percent * 2 * pi;
     points.add(Vector2(sin(radians), -cos(radians)) * size.x * 2);
     canvas.clipPath(Polygon(points).asPath());
+  }
+}
+
+class RackOverflowCounter extends PositionComponent with HasVisibility {
+  LocalState localState;
+  late TextBoxComponent text;
+
+  RackOverflowCounter(this.localState);
+
+  @override
+  FutureOr<void> onLoad() async {
+    final box = ScaledNineTileBoxComponent(.1);
+    final boxSprite = await Sprite.load('panel.png');
+    box.nineTileBox = AlphaNineTileBox(boxSprite, opacity: 0.8, leftWidth: 120, rightWidth: 120, topHeight: 120, bottomHeight: 120);
+    box.anchor = Anchor.center;
+    box.size = Vector2(70, 70);
+    add(box);
+    add(text = TextBoxComponent(
+      textRenderer: RackCooldown.styleLabel,
+      size: Vector2(70, 70),
+      anchor: Anchor.center,
+      align: Anchor.center,
+    ));
+  }
+
+  @override
+  void update(double dt) {
+    isVisible = localState.overflowTiles > 0;
+    position = Vector2(localState.rackSize * RackTile.spacing + RackBack.rackHeight / 2 + 12, RackBack.rackHeight / 2);
+    if (text.text != '+${localState.overflowTiles}') {
+      text.text = '+${localState.overflowTiles}';
+    }
   }
 }
