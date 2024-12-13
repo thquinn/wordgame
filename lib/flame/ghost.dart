@@ -73,14 +73,13 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
     boxComponent.scale = Vector2(1, 1);
     add(boxComponent);
     textComponent = TextBoxComponent(
+      anchor: Anchor.center,
+      position: Vector2(0, -.1),
       textRenderer: textPaint,
       text: username,
-      position: Vector2(0, -8.1),
-      align: Anchor.topCenter,
-      size: Vector2(50, 10),
-      anchor: Anchor(.5, 0),
-      pixelRatio: 200,
-      boxConfig: TextBoxConfig(growingBox: true)
+      align: Anchor(.5, .49),
+      size: Vector2(3, .5),
+      pixelRatio: 100,
     );
     add(textComponent);
     final arrowSprite = await Sprite.load('ghost_arrow.png');

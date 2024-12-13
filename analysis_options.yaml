@@ -15,6 +15,7 @@ analyzer:
     implementation_imports: ignore
     empty_catches: ignore
     constant_identifier_names: ignore
+    invalid_use_of_visible_for_testing_member: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the

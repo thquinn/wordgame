@@ -153,9 +153,10 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     textComponent = TextBoxComponent(
       text: letter,
       textRenderer: styleTile,
-      position: Vector2(-1, -1),
-      align: Anchor.center,
-      size: Vector2(3, 2.35),
+      anchor: Anchor(0, 0),
+      position: Vector2(.1, .1),
+      align: Anchor(.5, .52),
+      size: Vector2(.8, .8),
       pixelRatio: 200,
       priority: 1,
     );
