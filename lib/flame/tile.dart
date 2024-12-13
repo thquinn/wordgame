@@ -150,15 +150,12 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     sprite = spriteTile;
     anchor = Anchor(.5, .5);
     final letter = appState.localState!.provisionalTiles.containsKey(coor) ? appState.localState!.provisionalTiles[coor] : appState.game!.state.placedTiles[coor]!.letter;
-    textComponent = TextBoxComponent(
-      text: letter,
+    final letterWidth = styleTile.getLineMetrics(letter!).width;
+    textComponent = TextComponent(
+      position: Vector2(letterWidth / -2 + 0.5, -0.33),
       textRenderer: styleTile,
-      anchor: Anchor(0, 0),
-      position: Vector2(.1, .1),
-      align: Anchor(.5, .52),
-      size: Vector2(.8, .8),
-      pixelRatio: 200,
-      priority: 1,
+      size: Vector2(1, 1),
+      text: letter,
     );
     update(0);
     add(textComponent);

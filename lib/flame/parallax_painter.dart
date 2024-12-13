@@ -28,8 +28,17 @@ class ParallaxPainter extends CustomPainter {
       mat.scale(scale);
       mat.translate(game.size.x * 128 / zoom, game.size.y * 128 / zoom, 0);
       mat.translate(game.camera.viewfinder.position.x * -256 + 128, game.camera.viewfinder.position.y * -256 + 128, 0);
+
       // Sure would love to not create a new shader every paint, but
       // there's no way to change an ImageShader's matrix.
+
+      // Even better would be to use Parallax, but just look at what Flame does when you set a sprite to use repeating textures:
+      /*
+        for (final Rect tileRect in _generateImageTileRects(rect, destinationRect, repeat)) {
+          canvas.drawImageRect(image, sourceRect, tileRect, paint);
+        }
+      */
+      // God help us all.
       p.shader = ImageShader(
         image,
         TileMode.repeated,
