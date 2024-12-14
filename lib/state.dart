@@ -88,12 +88,8 @@ class WordGameState extends ChangeNotifier {
     }
   }
   onReceiveNotification(payload) {
-    print('received notif');
-    final sender = payload['sender'];
-    if (sender == localState!.username) return;
-    final args = Map<String, String>.from(payload['args']);
-    print(payload);
-    NotificationManager.enqueueFromBroadcast(payload['notiftype'], args);
+    if (payload['sender'] == localState!.username) return;
+    NotificationManager.enqueueFromBroadcast(payload['notiftype'], Map<String, String>.from(payload['args']));
   }
 
   // Commands.
@@ -117,6 +113,7 @@ class WordGameState extends ChangeNotifier {
         'active': true,
       });
     } on PostgrestException catch (e) {
+      print('Failed to start new game:');
       print(e.toString());
     }
   }
@@ -207,10 +204,7 @@ class WordGameState extends ChangeNotifier {
       if (assistUsernames.isNotEmpty) {
         channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
       }
-      print('provmap');
-      print(provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]));
       for (final wordQualifierPair in provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
-        print('qual');
         channel!.sendBroadcastMessage(event: 'notification', payload: {
           'sender': localState!.username,
           'notiftype': 'word',

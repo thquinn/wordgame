@@ -6,7 +6,7 @@ import 'package:wordgame/words.dart';
 class Game {
   final int id;
   final String channel;
-  final State state;
+  final GameState state;
   final bool active;
   final DateTime endsAt;
   final int version;
@@ -17,7 +17,7 @@ class Game {
     return Game(
       json['id'] as int,
       json['channel'] as String,
-      State(json['state']),
+      GameState(json['state']),
       json['active'] as bool,
       DateTime.parse(json['ends_at']),
       json['version'] as int,
@@ -25,13 +25,13 @@ class Game {
   }
 }
 
-class State {
+class GameState {
   int score = 0;
   Map<Point<int>, PlacedTile> placedTiles;
 
-  State._(this.score, this.placedTiles);
+  GameState._(this.score, this.placedTiles);
 
-  factory State(Map<String, dynamic> json) {
+  factory GameState(Map<String, dynamic> json) {
     final score = json['score'];
     List placedTilesList = json['placed_tiles'];
     final placedTiles = <Point<int>, PlacedTile>{};
@@ -39,7 +39,7 @@ class State {
       final coor = Point<int>(placedTilesList[i], placedTilesList[i + 1]);
       placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
-    return State._(score, placedTiles);
+    return GameState._(score, placedTiles);
   }
 
   jsonAfterProvisional(LocalState presence, List<ProvisionalWord> provisionalWords) {
