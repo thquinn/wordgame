@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:wordgame/util.dart';
-import 'package:wordgame/words.dart';
+import 'words.dart';
 
 class Game {
   final int id;
@@ -29,6 +29,8 @@ class GameState {
   int score = 0;
   Map<Point<int>, PlacedTile> placedTiles;
 
+  GameState.empty() : placedTiles = {};
+
   GameState._(this.score, this.placedTiles);
 
   factory GameState(Map<String, dynamic> json) {
@@ -42,12 +44,7 @@ class GameState {
     return GameState._(score, placedTiles);
   }
 
-  jsonAfterProvisional(LocalState presence, List<ProvisionalWord> provisionalWords) {
-    // Calculate move score.
-    int moveScore = 0;
-    for (ProvisionalWord provisionalWord in provisionalWords) {
-      moveScore += provisionalWord.score();
-    }
+  jsonAfterProvisional(LocalState presence, ProvisionalResult provisionalResult) {
     // Set state.
     final letterList = [];
     for (final entry in placedTiles.entries) {
@@ -57,7 +54,7 @@ class GameState {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     return {
-      'score': score + moveScore,
+      'score': score + provisionalResult.score(),
       'placed_tiles': letterList,
     };
   }
@@ -106,14 +103,7 @@ class LocalState {
       }
       return;
     }
-    print('about to calculate total weight of bag');
-    print(bagDistribution);
-    print(Words.wordSet.length);
-    print('static letter dist is');
-    print(Words.letterDistribution);
-    print(Words.wordSet.length);
     final totalWeight = bagDistribution.reduce((a, b) => a + b);
-    print('totalweight is $totalWeight');
     double selector = Util.random.nextDouble() * totalWeight;
     for (int i = 0; i < bagDistribution.length; i++) {
       selector -= bagDistribution[i];
@@ -128,6 +118,9 @@ class LocalState {
     }
   }
   refillBag() {
+    print('static letter dist is');
+    print(Words.letterDistribution);
+    print(Words.wordSet.length);
     for (int i = 0; i < bagDistribution.length; i++) {
       bagDistribution[i] += Words.letterDistribution[i];
     }

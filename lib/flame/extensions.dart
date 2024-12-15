@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
@@ -86,5 +88,14 @@ class CurveAverager extends Curve {
   @override
   double transformInternal(double t) {
     return curves.map((c) => c.transform(t)).reduce((a, b) => a + b) / curves.length;
+  }
+}
+
+extension PointNormalization on Point {
+  Point normalize() {
+    return Point(
+      x < 0 ? -1 : x == 0 ? 0 : 1,
+      y < 0 ? -1 : y == 0 ? 0 : 1
+    );
   }
 }

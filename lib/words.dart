@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/state.dart';
+import 'package:wordgame/util.dart';
 
 class Words {
   static Set<String> wordSet = {};
@@ -38,8 +39,8 @@ class Words {
     return wordSet.contains(word.toLowerCase()) == true;
   }
 
-  static List<ProvisionalWord> getProvisionalWords(WordGameState wordGameState) {
-    final List<ProvisionalWord> results = [];
+  static ProvisionalResult getProvisionalResult(WordGameState wordGameState) {
+    final List<ProvisionalWord> provisionalWords = [];
     final game = wordGameState.game!;
     final localState = wordGameState.localState!;
     // Check horizontal and vertical words.
@@ -64,11 +65,30 @@ class Words {
           point += direction;
         }
         if (word.length > 1) {
-          results.add(ProvisionalWord(word, usernames.toList()));
+          provisionalWords.add(ProvisionalWord(word, usernames.toList()));
         }
       }
     }
-    return results;
+    final enclosedAreas = Util.FindNewEnclosedEmptyAreas(game.state.placedTiles.keys.toSet(), game.state.placedTiles.keys.followedBy(localState.provisionalTiles.keys).toSet());
+    return ProvisionalResult(provisionalWords, enclosedAreas);
+  }
+}
+
+class ProvisionalResult {
+  final List<ProvisionalWord> words;
+  final List<Set<Point<int>>> enclosedAreas;
+
+  ProvisionalResult(this.words, this.enclosedAreas);
+
+  int score() {
+    int total = 0;
+    for (final word in words) {
+      total += word.score();
+    }
+    for (final area in enclosedAreas) {
+      total += 10 + (pow(area.length, 1.5) / 2.0).floor();
+    }
+    return total;
   }
 }
 

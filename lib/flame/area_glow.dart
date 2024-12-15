@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/util.dart';
 
@@ -25,8 +26,11 @@ class AreaGlowManager extends PositionComponent {
     spriteICorner = await Sprite.load('areaglow_icorner.png');
   }
 
-  void stateDelta(GameState oldState, GameState newState) {
-    
+  void gameDelta(Game oldGame, Game newGame) {
+    if (oldGame.id != newGame.id) return;
+    for (final coors in Util.FindNewEnclosedEmptyAreas(oldGame.state.placedTiles.keys.toSet(), newGame.state.placedTiles.keys.toSet())) {
+      animateArea(coors);
+    }
   }
   void animateArea(Set<Point<int>> coors) {
     // Find a coordinate with empty space to the left.
@@ -39,6 +43,7 @@ class AreaGlowManager extends PositionComponent {
     // Follow the outline of the point set.
     final normals = [Point(-1, 0), Point(0, -1), Point(1, 0), Point(0, 1)];
     int normalIndex = 0;
+    final startNormalIndex = normalIndex;
     do {
       for (int normalIndexOffset = 1; normalIndexOffset <= 4; normalIndexOffset++) {
         final checkNormal = normals[(normalIndex + normalIndexOffset) % 4];
@@ -53,25 +58,25 @@ class AreaGlowManager extends PositionComponent {
         coor += normals[normalIndex];
         normalIndex = (normalIndex + 3) % 4;
       }
-    } while (coor != start);
+    } while (coor != start || normalIndex != startNormalIndex);
     // Create path.
     if (outline.first == outline.last) {
       outline.removeLast();
     }
     final path = PathComponent(Paint()
       ..style = PaintingStyle.stroke
-      ..color = Color.fromRGBO(215, 215, 255, 1)
+      ..color = Color.fromRGBO(215, 215, 255, 0)
       ..strokeWidth = 0.066
       ..strokeCap = StrokeCap.round
-    , outline.map((e) => Vector2(e.x + 0.5, e.y + 0.633)).toList(), true, radius: .25);
-    final pathTime = path.pathLength * .05;
+    , removeColinear(outline).map((e) => Vector2(e.x + 0.5, e.y + 0.633)).toList(), true, radius: .25);
+    final pathTime = sqrt(path.pathLength) * .3;
     path.add(PathStartPercentEffect(EffectController(duration: pathTime, curve: Curves.easeInOut)));
-    path.add(PathEndPercentEffect(EffectController(duration: pathTime, curve: Curves.easeOutQuad)));
+    path.add(PathEndPercentEffect(EffectController(duration: pathTime, curve: Curves.easeOut)));
     path.add(SequenceEffect([
-      OpacityEffect.to(0, EffectController(duration: pathTime * .05)),
-      OpacityEffect.fadeIn(EffectController(duration: pathTime * .3, curve: Curves.easeIn)),
-      OpacityEffect.to(1, EffectController(duration: pathTime * .3)),
-      OpacityEffect.fadeOut(EffectController(duration: pathTime * .3, curve: Curves.easeOut)),
+      OpacityEffect.to(0, EffectController(duration: .1)),
+      OpacityEffect.fadeIn(EffectController(duration: .2, curve: Curves.easeIn)),
+      OpacityEffect.to(1, EffectController(duration: pathTime - .6)),
+      OpacityEffect.fadeOut(EffectController(duration: .2, curve: Curves.easeOut)),
       RemoveEffect(),
     ]));
     add(path);
@@ -115,13 +120,14 @@ class AreaGlowManager extends PositionComponent {
   }
 
   List<Point<int>> removeColinear(List<Point<int>> points) {
-    List<Point<int>> ret = [points.first];
-    for (int i = 1; i < points.length; i++) {
-      Point<int> a = points[i - 1];
-      Point<int> b = points[i];
-      Point<int> c = points[(i + 1) % points.length];
-      if (c - b != b - a) {
-        points.add(b);
+    List<Point<int>> ret = List.from(points);
+    for (int i = 0; i < ret.length; i++) {
+      final before = ret[(i + ret.length - 1) % ret.length];
+      final here = ret[i];
+      final after = ret[(i + 1) % ret.length];
+      if ((after - here).normalize() == (here - before).normalize()) {
+        ret.removeAt(i);
+        i--;
       }
     }
     return ret;

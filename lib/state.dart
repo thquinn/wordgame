@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wordgame/util.dart';
+import 'flame/area_glow.dart';
 import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/words.dart';
 
@@ -38,6 +40,9 @@ class WordGameState extends ChangeNotifier {
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
       callback: (payload) async {
         final updatedGame = Game.fromJson(payload.newRecord);
+        if (game != null && updatedGame != null) {
+          AreaGlowManager.instance.gameDelta(game!, updatedGame);
+        }
         if (game != null && game!.id != updatedGame!.id) {
           // A new game has started.
           localState!.reset();
@@ -88,8 +93,8 @@ class WordGameState extends ChangeNotifier {
     }
   }
   onReceiveNotification(payload) {
-    if (payload['sender'] == localState!.username) return;
-    NotificationManager.enqueueFromBroadcast(payload['notiftype'], Map<String, String>.from(payload['args']));
+    //if (payload['sender'] == localState!.username) return;
+    NotificationManager.enqueueFromBroadcast(payload['notiftype'], Util.castJsonToStringMap(payload['args']));
   }
 
   // Commands.
@@ -179,14 +184,14 @@ class WordGameState extends ChangeNotifier {
       return;
     }
     // Check for word legality.
-    final provisionalWords = Words.getProvisionalWords(this);
-    if (provisionalWords.any((w) => !Words.isLegal(w.word))) {
+    final provisionalResult = Words.getProvisionalResult(this);
+    if (provisionalResult.words.any((w) => !Words.isLegal(w.word))) {
       return;
     }
     // Play.
     final version = game!.version;
     final result = await Supabase.instance.client.from('games').update({
-      'state': game!.state.jsonAfterProvisional(localState!, provisionalWords),
+      'state': game!.state.jsonAfterProvisional(localState!, provisionalResult),
       'version': version + 1,
     }).eq('channel', roomID!).eq('version', version).eq('active', true).select().maybeSingle();
     if (result != null) {
@@ -199,12 +204,12 @@ class WordGameState extends ChangeNotifier {
       provisionalTiles.clear();
       await channel!.track(localState!.toPresenceJson());
       // Broadcasts.
-      final assistUsernames = provisionalWords.expand((pw) => pw.usernames).toSet().toList();
+      final assistUsernames = provisionalResult.words.expand((pw) => pw.usernames).toSet().toList();
       assistUsernames.remove(localState!.username);
       if (assistUsernames.isNotEmpty) {
         channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
       }
-      for (final wordQualifierPair in provisionalWords.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
+      for (final wordQualifierPair in provisionalResult.words.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
         channel!.sendBroadcastMessage(event: 'notification', payload: {
           'sender': localState!.username,
           'notiftype': 'word',
@@ -212,6 +217,17 @@ class WordGameState extends ChangeNotifier {
             'username': localState!.username,
             'qualifier': wordQualifierPair.last,
             'word': wordQualifierPair.first,
+          }
+        });
+      }
+      final enclosedArea = provisionalResult.enclosedAreas.map((e) => e.length).reduce((a, b) => a + b);
+      if (enclosedArea > 1) {
+        channel!.sendBroadcastMessage(event: 'notification', payload: {
+          'sender': localState!.username,
+          'notiftype': 'enclosed_area',
+          'args': {
+            'username': localState!.username,
+            'area': enclosedArea,
           }
         });
       }

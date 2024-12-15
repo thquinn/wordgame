@@ -13,12 +13,21 @@ class NotificationManager extends PositionComponent {
   static List<GameNotification> pending = [];
   static void enqueueFromBroadcast(String type, Map<String, String> args) {
     if (type == 'word') enqueueWord(args['username']!, args['qualifier']!, args['word']!);
+    if (type == 'enclosed_area') enqueueArea(args['username']!, int.parse(args['area']!));
   }
   static void enqueueWord(String username, String qualifier, String word) {
     pending.add(GameNotification([
         BoldTextNode(PlainTextNode(username)),
         PlainTextNode(' played the $qualifier word '),
         CodeTextNode(PlainTextNode(word.toUpperCase())),
+        PlainTextNode('!'),
+    ]));
+  }
+  static void enqueueArea(String username, int area) {
+    pending.add(GameNotification([
+        BoldTextNode(PlainTextNode(username)),
+        PlainTextNode(' surrounded '),
+        BoldTextNode(PlainTextNode('$area tiles')),
         PlainTextNode('!'),
     ]));
   }

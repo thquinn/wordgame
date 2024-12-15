@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/area_glow.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
 class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {
@@ -93,7 +94,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f4) {
       appState.onReceiveNotification({
         'sender': 'swarrizard',
-        'type': 'word',
+        'notiftype': 'word',
         'args': {
           'username': 'swarrizard',
           'qualifier': '7-letter quintacolor',
@@ -109,14 +110,19 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     }
     // DEBUG: Spawn area glow.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f7) {
-      AreaGlowManager.instance.animateArea({
-        Point(-5, 0),
-        Point(-4, 1),
-        Point(-4, 0),
-        Point(-4, -1),
-        Point(-3, 1),
-        Point(-3, 0),
-        Point(-3, -1),
+      Game newGame = appState.game!;
+      Game fakeOldGame = Game(newGame.id, '', GameState.empty(), false, DateTime.now(), 0);
+      AreaGlowManager.instance.gameDelta(fakeOldGame, newGame);
+      return false;
+    }
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.f8) {
+      appState.onReceiveNotification({
+        'sender': 'swarrizard',
+        'notiftype': 'enclosed_area',
+        'args': {
+          'username': 'swarrizard',
+          'area': 8,
+        },
       });
       return false;
     }
