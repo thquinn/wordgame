@@ -200,11 +200,13 @@ class WordGameState extends ChangeNotifier {
     }
     // Play.
     final version = game!.version;
-    final result = await Supabase.instance.client.from('games').update({
+    final results = await Supabase.instance.client.from('games').update({
       'state': game!.state.jsonAfterProvisional(localState!, provisionalResult),
       'version': version + 1,
-    }).eq('channel', roomID!).eq('version', version).eq('active', true).select().maybeSingle();
-    if (result != null) {
+    }).eq('channel', roomID!).eq('version', version).eq('active', true).select();
+    // NOTE: using maybeSingle() on the query above returns an error: "The result contains 0 rows"
+    // Yeah, I know that!
+    if (results.isNotEmpty) {
       // Finalize move.
       for (final letter in provisionalTiles.values) {
         localState!.rack.remove(letter);

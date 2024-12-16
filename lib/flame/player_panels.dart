@@ -59,7 +59,6 @@ class TeamPanels extends PositionComponent with HasGameRef<WordGame> {
   void update(double dt) {
     final presences = appState.channel!.presenceState().map((e) => e.presences.first);
     final adminUsername = appState.getAdminUsername();
-    print('admin is $adminUsername');
     final List<String> usernames = presences.map((e) => e.payload['username']).where((e) => e != null).cast<String>().toList();
     usernames.sort();
     final lines = [];
