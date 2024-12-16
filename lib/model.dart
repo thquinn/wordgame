@@ -67,7 +67,7 @@ class PlacedTile {
 class LocalState {
   static const int PARTIAL_REFILL = 5;
 
-  bool isAdmin = false;
+  DateTime joinTime;
   String username;
   Point<int> cursor;
   bool cursorHorizontal;
@@ -78,9 +78,9 @@ class LocalState {
   Map<Point<int>, String> provisionalTiles;
   String? assister; // set to a username when another player gives you an assist tile
 
-  LocalState(this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.overflowTiles, this.bagDistribution, this.provisionalTiles);
+  LocalState(this.joinTime, this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.overflowTiles, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
+    final localState = LocalState(DateTime.now(), username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
     localState.reset();
     return localState;
   }
@@ -147,12 +147,12 @@ class LocalState {
       provisionalList.addAll([entry.key.x, entry.key.y, entry.value]);
     }
     return {
-      'isAdmin': isAdmin,
+      'join_time': joinTime.toString(),
       'username': username,
       'cursor': [cursor.x, cursor.y],
-      'rackSize': rackSize,
+      'rack_size': rackSize,
       'rack': rack,
-      'provisionalTiles': provisionalList,
+      'provisional_tiles': provisionalList,
     };
   }
 }

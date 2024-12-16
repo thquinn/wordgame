@@ -15,14 +15,24 @@ class WordGameState extends ChangeNotifier {
   LocalState? localState;
   Game? game;
 
-  isConnected() {
+  bool isConnected() {
     return roomID != null && channel != null && localState != null;
   }
-  hasGame() {
+  bool hasGame() {
     return isConnected() && game != null;
   }
-  gameIsActive() {
+  bool gameIsActive() {
     return hasGame() && game!.active && game!.endsAt.isAfter(DateTime.now());
+  }
+  bool isAdmin() {
+    if (channel!.presenceState().isEmpty) return false;
+    return isConnected() && localState!.joinTime == channel!.presenceState().map((e) => DateTime.parse(e.presences.first.payload['join_time'])).reduce((a, b) => a.isBefore(b) ? a : b);
+  }
+  String getAdminUsername() {
+    if (!isConnected()) return '';
+    if (channel!.presenceState().isEmpty) return '';
+    final earliestJoin = channel!.presenceState().map((e) => DateTime.parse(e.presences.first.payload['join_time'])).reduce((a, b) => a.isBefore(b) ? a : b);
+    return channel!.presenceState().firstWhere((e) => DateTime.parse(e.presences.first.payload['join_time']) == earliestJoin).presences.first.payload['username'];
   }
 
   connect(String roomID, String username) {
@@ -100,6 +110,7 @@ class WordGameState extends ChangeNotifier {
   startGame() async {
     if (!isConnected()) return;
     if (gameIsActive()) return;
+    if (!isAdmin()) return;
     // Finish existing game.
     if (game != null) {
       final version = game!.version;
