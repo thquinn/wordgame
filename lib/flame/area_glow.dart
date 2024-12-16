@@ -39,42 +39,37 @@ class AreaGlowManager extends PositionComponent {
       coor -= Point(1, 0);
     }
     Point start = coor;
-    List<Point<int>> outline = [coor + Point(0, 1)];
+    List<Point<int>> outline = [];
     // Follow the outline of the point set.
-    final normals = [Point(-1, 0), Point(0, -1), Point(1, 0), Point(0, 1)];
+    final outlineOffsets = [Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)];
+    final diagonals = [Point(-1, -1), Point(1, -1), Point(1, 1), Point(-1, 1)];
+    final adjacents = [Point(0, -1), Point(1, 0), Point(0, 1), Point(-1, 0)];
     int normalIndex = 0;
     final startNormalIndex = normalIndex;
-    outerloop:
     while (true) {
-      for (int normalIndexOffset = 1; normalIndexOffset <= 4; normalIndexOffset++) {
-        final checkNormalIndex = (normalIndex + normalIndexOffset) % 4;
-        if (coor == start && checkNormalIndex == startNormalIndex) {
-          break outerloop;
-        }
-        final checkNormal = normals[checkNormalIndex];
-        outline.add(outline.last + checkNormal);
-        if (coors.contains(coor + checkNormal)) {
-          coor += checkNormal;
-          normalIndex = (normalIndex + normalIndexOffset + 3) % 4;
-          break;
-        }
-      }
-      if (coors.contains(coor + normals[normalIndex])) {
-        coor += normals[normalIndex];
+      outline.add(coor + outlineOffsets[normalIndex]);
+      if (coors.contains(coor + diagonals[normalIndex])) {
+        coor += diagonals[normalIndex];
         normalIndex = (normalIndex + 3) % 4;
+      } else {
+        if (coors.contains(coor + adjacents[normalIndex])) {
+          coor += adjacents[normalIndex];
+        } else {
+          normalIndex = (normalIndex + 1) % 4;
+        }
       }
+      if (coor == start && normalIndex == startNormalIndex) break;
     }
     // Create path.
-    if (outline.first == outline.last) {
-      outline.removeLast();
-    }
+    final pathOutline = removeColinear(outline);
+    pathOutline.addAll(pathOutline.take(3));
     final path = PathComponent(Paint()
       ..style = PaintingStyle.stroke
       ..color = Color.fromRGBO(215, 215, 255, 0)
       ..strokeWidth = 0.066
       ..strokeCap = StrokeCap.round
-    , removeColinear(outline).map((e) => Vector2(e.x + 0.5, e.y + 0.633)).toList(), true, radius: .25);
-    final pathTime = sqrt(path.pathLength) * .3;
+    , removeColinear(pathOutline).map((e) => Vector2(e.x + 0.5, e.y + 0.633)).toList(), false, radius: .25);
+    final pathTime = sqrt(path.pathLength) * .066 + .5;
     path.add(PathStartPercentEffect(EffectController(duration: pathTime, curve: Curves.easeInOut)));
     path.add(PathEndPercentEffect(EffectController(duration: pathTime, curve: Curves.easeOut)));
     path.add(SequenceEffect([
