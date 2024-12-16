@@ -10,10 +10,16 @@ import 'package:wordgame/flame/player_panels.dart';
 import 'package:wordgame/flame/rack.dart';
 import 'package:wordgame/flame/parallax_painter.dart';
 import 'package:wordgame/flame/status_panels.dart';
+import 'package:wordgame/flame/world.dart';
+import 'package:wordgame/util.dart';
 
-class WordCamera extends CameraComponent with KeyboardHandler {
+class WordCamera extends CameraComponent with HasGameRef<WordGame>, KeyboardHandler {
   double zoom = 15;
   double inputX = 0, inputY = 0, inputZoom = 0;
+
+  Vector2 followVelocity = Vector2.zero();
+  Vector2 lastCursorPosition = Vector2.zero();
+  bool followCursor = true;
 
   WordCamera() : super() {
     backdrop.add(ParallaxGrid());
@@ -42,6 +48,19 @@ class WordCamera extends CameraComponent with KeyboardHandler {
     zoom = zoom.clamp(8, 40);
     viewfinder.visibleGameSize = Vector2(zoom, zoom);
     viewfinder.position += Vector2(inputX, inputY) * 3 * sqrt(zoom) * dt;
+    // Cursor-following behavior.
+    final cursor = (game.world as WordWorld).cursor;
+    if (cursor.position != lastCursorPosition) followCursor = true;
+    lastCursorPosition = cursor.position.clone();
+    if (inputX != 0 || inputY != 0 || inputZoom != 0) followCursor = false;
+    final interiorRect = visibleWorldRect.deflate(visibleWorldRect.height * 0.1);
+    if (followCursor && !interiorRect.contains(cursor.position.toOffset())) {
+      Vector2 closestPoint = Util.getCameraPointWithinRect(cursor.position, interiorRect);
+      Util.smoothDampVec2(viewfinder.position, closestPoint, followVelocity, .5, dt);
+      viewfinder.position += followVelocity * dt;
+    } else {
+      followVelocity = Vector2.zero();
+    }
   }
 }
 

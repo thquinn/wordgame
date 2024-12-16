@@ -25,9 +25,12 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
   late LocalState localState;
   late Point<double> tileTimer;
 
-  Rack() : super(size: Vector2(1000, RackBack.rackHeight)) {
+  Rack() : super(size: Vector2(1, RackBack.rackHeight)) {
     renderShape = false;
-    tileTimer = Point(0, 5);
+    resetTileTimer();
+  }
+  resetTileTimer() {
+    tileTimer = Point(0, 7);
   }
 
   @override
@@ -39,18 +42,18 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
     for (int i = 0; i < localState.rackSize; i++) {
       add(RackTile(localState, i));
     }
-    add(RackCooldown(localState, this));
+    add(RackCooldown(appState, this));
     add(RackOverflowCounter(localState));
   }
 
   @override
   void update(double dt) {
     if (!appState.gameIsActive()) {
-      tileTimer = Point(0, 5);
+      resetTileTimer();
       return;
     }
     if (localState.rack.length >= localState.rackSize) {
-      tileTimer = Point(0, tileTimer.y);
+      resetTileTimer();
     } else {
       tileTimer += Point(dt, 0);
     }
@@ -86,6 +89,7 @@ class RackTile extends SpriteComponent {
   int index;
   late Sprite spriteTile, spriteSlot;
   late TextComponent textComponent;
+  late MoveAlongPathEffect hopEffect;
 
   static final TextPaint styleTile = TextPaint(
     style: TextStyle(
@@ -111,25 +115,32 @@ class RackTile extends SpriteComponent {
     spriteSlot = await Sprite.load('rack_slot.png');
     sprite = spriteSlot;
     position = Vector2(index * spacing, -12);
-    textComponent = TextBoxComponent(
+    add(textComponent = TextBoxComponent(
       textRenderer: styleTile,
       position: Vector2.zero(),
       align: Anchor.center,
       size: Vector2(RackBack.rackHeight, RackBack.rackHeight - 5),
-    );
-    add(textComponent);
+    ));
+    add(hopEffect = MoveAlongPathEffect(
+      Path()..quadraticBezierTo(0, -20, 0, 0),
+      EffectController(duration: 0.2, curve: Curves.slowMiddle)
+    )..pause()..removeOnFinish = false);
   }
 
   @override
   void update(double dt) {
     final tilePresent = index < localState.rack.length;
-    if (!tilePresent) {
-      sprite = spriteSlot;
-      opacity = .8;
-      textComponent.text = '';
-      return;
+    if (tilePresent != textComponent.text.isNotEmpty) {
+      if (tilePresent) {
+        sprite = spriteTile;
+        hopEffect.reset();
+      } else {
+        sprite = spriteSlot;
+        opacity = .8;
+        textComponent.text = '';
+      }
     }
-    sprite = spriteTile;
+    if (!tilePresent) return;
     
     final letter = localState.rack[index];
     textComponent.text = letter.toUpperCase();
@@ -158,7 +169,7 @@ class RackTile extends SpriteComponent {
       )..opacity = 0
       ..add(MoveByEffect(
         Vector2(0, -50),
-        CurvedEffectController(3, CurveAverager([Curves.easeInOut, Curves.linear]))
+        CurvedEffectController(3, Curves.slowMiddle)
       ))..add(SequenceEffect([
         OpacityEffect.fadeIn(EffectController(duration: 1)),
         OpacityEffect.to(1, EffectController(duration: 1)),
@@ -179,11 +190,11 @@ class RackCooldown extends PositionComponent with HasVisibility {
     ),
   );
 
-  final LocalState localState;
+  final WordGameState state;
   final Rack rack;
   late TextBoxComponent label;
 
-  RackCooldown(this.localState, this.rack);
+  RackCooldown(this.state, this.rack);
 
   @override
   FutureOr<void> onLoad() {
@@ -198,7 +209,8 @@ class RackCooldown extends PositionComponent with HasVisibility {
 
   @override
   void update(double dt) {
-    isVisible = localState.rack.length < localState.rackSize;
+    final localState = state.localState!;
+    isVisible = state.gameIsActive() && localState.rack.length < localState.rackSize;
     position = Vector2(localState.rack.length * RackTile.spacing + RackBack.rackHeight / 2 + 2, RackBack.rackHeight / 2);
     label.text = (rack.tileTimer.y - rack.tileTimer.x).ceil().toString();
   }

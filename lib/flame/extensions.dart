@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
-import 'package:flame/src/text/common/line_metrics.dart';
+import 'package:flame/text.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 

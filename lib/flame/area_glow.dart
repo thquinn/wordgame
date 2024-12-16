@@ -44,9 +44,14 @@ class AreaGlowManager extends PositionComponent {
     final normals = [Point(-1, 0), Point(0, -1), Point(1, 0), Point(0, 1)];
     int normalIndex = 0;
     final startNormalIndex = normalIndex;
-    do {
+    outerloop:
+    while (true) {
       for (int normalIndexOffset = 1; normalIndexOffset <= 4; normalIndexOffset++) {
-        final checkNormal = normals[(normalIndex + normalIndexOffset) % 4];
+        final checkNormalIndex = (normalIndex + normalIndexOffset) % 4;
+        if (coor == start && checkNormalIndex == startNormalIndex) {
+          break outerloop;
+        }
+        final checkNormal = normals[checkNormalIndex];
         outline.add(outline.last + checkNormal);
         if (coors.contains(coor + checkNormal)) {
           coor += checkNormal;
@@ -58,7 +63,7 @@ class AreaGlowManager extends PositionComponent {
         coor += normals[normalIndex];
         normalIndex = (normalIndex + 3) % 4;
       }
-    } while (coor != start || normalIndex != startNormalIndex);
+    }
     // Create path.
     if (outline.first == outline.last) {
       outline.removeLast();
@@ -73,9 +78,8 @@ class AreaGlowManager extends PositionComponent {
     path.add(PathStartPercentEffect(EffectController(duration: pathTime, curve: Curves.easeInOut)));
     path.add(PathEndPercentEffect(EffectController(duration: pathTime, curve: Curves.easeOut)));
     path.add(SequenceEffect([
-      OpacityEffect.to(0, EffectController(duration: .1)),
-      OpacityEffect.fadeIn(EffectController(duration: .2, curve: Curves.easeIn)),
-      OpacityEffect.to(1, EffectController(duration: pathTime - .6)),
+      OpacityEffect.fadeIn(EffectController(duration: .1, curve: Curves.easeIn)),
+      OpacityEffect.to(1, EffectController(duration: pathTime - .4)),
       OpacityEffect.fadeOut(EffectController(duration: .2, curve: Curves.easeOut)),
       RemoveEffect(),
     ]));

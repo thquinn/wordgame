@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/game.dart';
 
@@ -23,6 +24,61 @@ class Util {
     Vector2 projectionPoint = b + lineVector * scalar;
     Vector2 reflectedPoint = projectionPoint + (projectionPoint - a);
     return reflectedPoint;
+  }
+
+  static double smoothDamp(double current, double target, List<double> velocity, double smoothTime, double dt) {
+    smoothTime = max(.0001, smoothTime);
+    final omega = 2 / smoothTime;
+    final x = omega * dt;
+    final exp = 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x);
+    final change = current - target;
+    final originalTo = target;
+    target = current - change;
+    final temp = (velocity[0] + omega * change) * dt;
+    velocity[0] = (velocity[0] - omega * temp) * exp;
+    double output = target + (change + temp) * exp;
+    // Prevent overshooting
+    if (originalTo - current > 0.0 == output > originalTo) {
+        output = originalTo;
+        velocity[0] = (output - originalTo) / dt;
+    }
+    return output;
+  }
+  static Vector2 smoothDampVec2(Vector2 current, Vector2 target, Vector2 velocity, double smoothTime, double dt) {
+    smoothTime = max(.0001, smoothTime);
+    final omega = 2 / smoothTime;
+    final x = omega * dt;
+    final exp = 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x);
+    final changeX = current.x - target.x;
+    final changeY = current.y - target.y;
+    final originalTo = target.clone();
+    target.x = current.x - changeX;
+    target.y = current.y - changeY;
+    final tempX = (velocity.x + omega * changeX) * dt;
+    final tempY = (velocity.y + omega * changeY) * dt;
+    velocity.x = (velocity.x - omega * tempX) * exp;
+    velocity.y = (velocity.y - omega * tempY) * exp;
+    double outputX = target.x + (changeX + tempX) * exp;
+    double outputY = target.y + (changeY + tempY) * exp;
+    // Prevent overshooting
+    final origMinusCurrentX = originalTo.x - current.x;
+    final origMinusCurrentY = originalTo.y - current.y;
+    final outMinusOrigX = outputX - originalTo.x;
+    final outMinusOrigY = outputY - originalTo.y;
+    if (origMinusCurrentX * outMinusOrigX + origMinusCurrentY * outMinusOrigY > 0) {
+        outputX = originalTo.x;
+        outputY = originalTo.y;
+        velocity.x = (outputX - originalTo.x) / dt;
+        velocity.y = (outputY - originalTo.y) / dt;
+    }
+    return Vector2(outputX, outputY);
+  }
+
+  static Vector2 getCameraPointWithinRect(Vector2 point, Rect rect) {
+    if (rect.contains(point.toOffset())) return point;
+    final x = point.x > rect.left && point.x < rect.right ? (rect.left + rect.right) / 2 : clampDouble(point.x, rect.left, rect.right);
+    final y = point.y > rect.top && point.y < rect.bottom ? (rect.top + rect.bottom) / 2 : clampDouble(point.y, rect.top, rect.bottom);
+    return Vector2(x, y);
   }
 
   static List<Set<Point<int>>> FindNewEnclosedEmptyAreas(Set<Point<int>> before, Set<Point<int>> after) {

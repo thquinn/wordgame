@@ -67,6 +67,7 @@ class PlacedTile {
 class LocalState {
   static const int PARTIAL_REFILL = 5;
 
+  bool isAdmin = false;
   String username;
   Point<int> cursor;
   bool cursorHorizontal;
@@ -146,6 +147,7 @@ class LocalState {
       provisionalList.addAll([entry.key.x, entry.key.y, entry.value]);
     }
     return {
+      'isAdmin': isAdmin,
       'username': username,
       'cursor': [cursor.x, cursor.y],
       'rackSize': rackSize,

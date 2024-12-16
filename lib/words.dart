@@ -102,6 +102,9 @@ class ProvisionalWord {
 
   int score() {
     int baseScore = word.split('').map((char) => Words.letterValues[char] ?? 0).reduce((sum, value) => sum + value);
+    if (word.length > 5) {
+      baseScore += pow(word.length - 4, 2).floor();
+    }
     return baseScore * usernames.length;
   }
 

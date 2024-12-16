@@ -7,10 +7,12 @@ import 'package:wordgame/flame/ghost.dart';
 import 'package:wordgame/flame/tile.dart';
 
 class WordWorld extends World {
+  late Cursor cursor;
+
   @override
   Future<void> onLoad() async {
     await add(TileManager());
-    await add(Cursor());
+    await add(cursor = Cursor());
     await add(GhostManager());
     await add(AreaGlowManager());
   }

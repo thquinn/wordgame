@@ -93,7 +93,6 @@ class WordGameState extends ChangeNotifier {
     }
   }
   onReceiveNotification(payload) {
-    //if (payload['sender'] == localState!.username) return;
     NotificationManager.enqueueFromBroadcast(payload['notiftype'], Util.castJsonToStringMap(payload['args']));
   }
 
@@ -220,7 +219,7 @@ class WordGameState extends ChangeNotifier {
           }
         });
       }
-      final enclosedArea = provisionalResult.enclosedAreas.map((e) => e.length).reduce((a, b) => a + b);
+      final enclosedArea = provisionalResult.enclosedAreas.isEmpty ? 0 : provisionalResult.enclosedAreas.map((e) => e.length).reduce((a, b) => a + b);
       if (enclosedArea > 1) {
         channel!.sendBroadcastMessage(event: 'notification', payload: {
           'sender': localState!.username,
@@ -234,7 +233,7 @@ class WordGameState extends ChangeNotifier {
     }
   }
   clearProvisionalTiles() async {
-    if (!gameIsActive()) return;
+    if (!hasGame()) return;
     if (localState!.provisionalTiles.isEmpty) return;
     localState!.provisionalTiles.clear();
     await channel!.track(localState!.toPresenceJson());

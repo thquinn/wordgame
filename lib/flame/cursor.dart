@@ -42,6 +42,9 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     isVisible = appState.hasGame();
     transform.position = Vector2(appState.localState!.cursor.x.toDouble(), appState.localState!.cursor.y.toDouble());
     arrow.transform.angleDegrees = appState.localState!.cursorHorizontal ? 0 : 90;
+    if (appState.game?.endsAt.isBefore(DateTime.now()) == true) {
+      appState.clearProvisionalTiles();
+    }
   }
 
   @override
@@ -81,7 +84,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
       appState.localState!.rack.sort();
     }
     // DEBUG: Start a new game.
-    if (keyDown && event.logicalKey == LogicalKeyboardKey.f2) {
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.space) {
       appState.startGame();
       return false;
     }

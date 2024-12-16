@@ -43,7 +43,7 @@ class GhostManager extends PositionComponent with HasGameRef<WordGame> {
     }
 }
 
-class Ghost extends PositionComponent with HasGameRef<WordGame> {
+class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
   final FixedHeightTextPaint textPaint = FixedHeightTextPaint(
     .3,
     style: TextStyle(
@@ -65,21 +65,21 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
   Future<void> onLoad() async {
     position = Vector2(0, 1);
     final boxSprite = await Sprite.load('ghost.png');
-    boxComponent = ScaledNineTileBoxComponent(.005);
+    boxComponent = ScaledNineTileBoxComponent(.004);
     boxComponent.nineTileBox = AlphaNineTileBox(boxSprite, opacity: 0.1, leftWidth: 75, rightWidth: 75, topHeight: 127, bottomHeight: 127);
-    boxComponent.position = Vector2(0, -.75);
+    boxComponent.position = Vector2(0, -.73);
     boxComponent.anchor = Anchor(.5, 0);
     boxComponent.size = Vector2(2, 1);
     boxComponent.scale = Vector2(1, 1);
     add(boxComponent);
     textComponent = TextBoxComponent(
       anchor: Anchor.center,
-      position: Vector2(0, -.1),
       textRenderer: textPaint,
       text: username,
       align: Anchor(.5, .49),
       size: Vector2(3, .5),
       pixelRatio: 100,
+      boxConfig: TextBoxConfig(maxWidth: 10000),
     );
     add(textComponent);
     final arrowSprite = await Sprite.load('ghost_arrow.png');
@@ -94,19 +94,30 @@ class Ghost extends PositionComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
-    final usernames = [username];//, 'anotherguy', 'Thirdman McLongname', 'fourtho', 'fiff', 'sicks'];
-    final width = max(usernames.map((u) => textComponent.getLineWidth(u, u.length)).reduce(max) + .5, 1.0);
-    textComponent.text = usernames.join('\n');
-    final height = usernames.length * textPaint.fixedHeight + .8;
-    boxComponent.setSize(Vector2(width, height));
     try {
-      final presence = appState.channel!.presenceState().firstWhere((presence) => presence.presences[0].payload['username'] == username);
-      final payload = presence.presences[0].payload;
+      final presences = appState.channel!.presenceState().map((e) => e.presences.first);
+      final presence = presences.firstWhere((e) => e.payload['username'] == username);
+      final payload = presence.payload;
       final cursor = Point<int>(payload['cursor'][0], payload['cursor'][1]);
-      position = Vector2(cursor.x.toDouble(), cursor.y.toDouble() + 1.2);
-    } catch (e) {
+      // Find players at this position.
+      final usernames = presences.where((e) => Point<int>(e.payload['cursor'][0], e.payload['cursor'][1]) == cursor).map((e) => e.payload['username'] as String).toList();
+      usernames.removeWhere((e) => e == appState.localState!.username);
+      usernames.sort();
+      isVisible = usernames[0] == username;
+      if (!isVisible) return;
+      final width = max(usernames.map((u) => textComponent.getLineWidth(u, u.length)).reduce(max) + .5, 1.0);
+      textComponent.lines.clear();
+      textComponent.lines.addAll(usernames);
+      final height = usernames.length * textPaint.fixedHeight + .8;
+      textComponent.size = Vector2(width, height);
+      textComponent.position = Vector2(0, height / 2 - .65);
+      boxComponent.setSize(Vector2(width, height));
+      position = Vector2(cursor.x.toDouble(), cursor.y + 1.2);
+    } catch (e, stackTrace) {
+      isVisible = false;
       print('Ghost for $username failed to find presence.');
       print(e.toString());
+      print(stackTrace.toString());
     }
   }
 }

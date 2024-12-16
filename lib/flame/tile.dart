@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -16,6 +17,7 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
 
     late WordGameState appState;
     Map<Point<int>, TileWrapper> tiles = {};
+    Set<Point<int>> newCoors = {};
 
     @override
     void onMount() {
@@ -36,13 +38,11 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
         tiles.remove(removedCoor);
       }
       // Add tiles.
-      final tileCoors = List.from(appState.game!.state.placedTiles.keys)..addAll(appState.localState!.provisionalTiles.keys);
-      for (final coor in tileCoors) {
-        if (!tiles.containsKey(coor)) {
+      newCoors = appState.game!.state.placedTiles.keys.followedBy(appState.localState!.provisionalTiles.keys).where((e) => !tiles.containsKey(e)).toSet();
+      for (final coor in newCoors) {
           TileWrapper tile = TileWrapper(appState, coor);
           add(tile);
           tiles[coor] = tile;
-        }
       }
       if (tiles.isNotEmpty) {
         updates++;
@@ -117,6 +117,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     ColorMatrixHSVC.make(hue: -0.125, saturation: 3, brightness: -0.1), // peach
   ];
   static final Map<String, int> teammateFilterIndices = {};
+  static const double placementAnimationSpeed = 2;
 
   TileState tileState = TileState.unknown;
   final WordGameState appState;
@@ -172,9 +173,13 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       tileState = newState;
       // Start placement animation.
       if (tileState == TileState.played && TileManager.updates > 20) {
-        lift = 1;
+        final newCoors = (parent!.parent as TileManager).newCoors;
+        final minX = newCoors.map((e) => e.x).reduce(min);
+        final minY = newCoors.map((e) => e.y).reduce(min);
+        final delay = max(coor.x - minX, coor.y - minY) * .1;
+        lift = 1 + delay * placementAnimationSpeed;
         opacity = 0;
-        add(OpacityEffect.fadeIn(EffectController(duration: .25)));
+        add(OpacityEffect.fadeIn(EffectController(startDelay: delay, duration: .25)));
       }
       // Set sprite and text.
       sprite = tileState == TileState.provisional ? spriteProvisional : lift > 0 ? spriteTile : spriteTilePlaced;
@@ -194,10 +199,21 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     textComponent.text = letter?.toUpperCase() ?? '';
     // Placement animation.
     if (lift > 0) {
-      lift = max(lift - dt * 2, 0);
-      position = Vector2(0, Curves.easeInOutCubic.transform(lift) * -.5);
+      final clampedLift = clampDouble(lift, 0, 1);
+      lift = max(lift - dt * placementAnimationSpeed, 0);
+      position = Vector2(0, Curves.easeInOutCubic.transform(clampedLift) * -.5);
       if (lift == 0) {
         sprite = spriteTilePlaced;
+        textComponent.textRenderer = styleTile;
+      } else {
+        final styleFade = TextPaint(
+          style: TextStyle(
+            fontSize: .66,
+            fontFamily: 'Katahdin Round Dekerned',
+            color: BasicPalette.black.color.withOpacity(1 - clampedLift),
+          ),
+        );
+        textComponent.textRenderer = styleFade;
       }
     }
   }
