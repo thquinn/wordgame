@@ -80,7 +80,7 @@ class LocalState {
 
   LocalState(this.joinTime, this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.overflowTiles, this.bagDistribution, this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(DateTime.now(), username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
+    final localState = LocalState(DateTime.now().toUtc(), username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
     localState.reset();
     return localState;
   }
