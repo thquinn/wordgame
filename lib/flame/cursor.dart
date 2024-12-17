@@ -7,18 +7,21 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/area_glow.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/flame/tile.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
 class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {
   late WordGameState appState;
   late SpriteComponent arrow;
+  late Sprite spriteCursor, spriteCursorOutside;
 
   Cursor() : super(size: Vector2.all(2), anchor: Anchor.center, paint: Paint()..filterQuality = FilterQuality.high,);
 
   @override
   Future<void> onLoad() async {
-    sprite = await Sprite.load('cursor.png');
+    sprite = spriteCursor = await Sprite.load('cursor.png');
+    spriteCursorOutside = await Sprite.load('cursor_outside.png');
     final spriteArrow = await Sprite.load('cursor_arrow.png');
     arrow = SpriteComponent(
       sprite: spriteArrow,
@@ -40,7 +43,12 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
   @override
   void update(double dt) {
     isVisible = appState.hasGame();
-    transform.position = Vector2(appState.localState!.cursor.x.toDouble(), appState.localState!.cursor.y.toDouble());
+    if (!isVisible) return;
+    final cursor = appState.localState!.cursor;
+    final cursorOnTile = appState.game!.state.placedTiles.containsKey(cursor) || appState.localState!.provisionalTiles.containsKey(cursor);
+    sprite = cursorOnTile ? spriteCursorOutside : spriteCursor;
+    transform.position = Vector2(cursor.x.toDouble(), cursor.y.toDouble());
+    arrow.opacity = cursorOnTile ? 0 : 1;
     arrow.transform.angleDegrees = appState.localState!.cursorHorizontal ? 0 : 90;
     if (appState.game?.endsAt.isBefore(DateTime.now()) == true) {
       appState.clearProvisionalTiles();
@@ -72,6 +80,9 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
       appState.retreatCursorAndDelete();
     }
     // Delete all.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.escape) {
+      appState.clearProvisionalTiles();
+    }
     if (keyRepeat && event.logicalKey == LogicalKeyboardKey.backspace) {
       appState.clearProvisionalTiles();
     }
@@ -115,18 +126,8 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f7) {
       Game newGame = appState.game!;
       Game fakeOldGame = Game(newGame.id, '', GameState.empty(), false, DateTime.now(), 0);
+      TileManager.instance.gameDelta(fakeOldGame, newGame);
       AreaGlowManager.instance.gameDelta(fakeOldGame, newGame);
-      return false;
-    }
-    if (keyDown && event.logicalKey == LogicalKeyboardKey.f8) {
-      appState.onReceiveNotification({
-        'sender': 'swarrizard',
-        'notiftype': 'enclosed_area',
-        'args': {
-          'username': 'swarrizard',
-          'area': 8,
-        },
-      });
       return false;
     }
     return true;

@@ -17,7 +17,7 @@ class Words {
   };
 
   static initialize() async {
-    final file = await rootBundle.loadString('assets/enable1.txt');
+    final file = await rootBundle.loadString('assets/words.txt');
     LineSplitter ls = LineSplitter();
     wordSet = ls.convert(file).toSet();
     print('Initialized word list with ${wordSet.length} words.');
@@ -69,16 +69,20 @@ class Words {
         }
       }
     }
-    final enclosedAreas = Util.FindNewEnclosedEmptyAreas(game.state.placedTiles.keys.toSet(), game.state.placedTiles.keys.followedBy(localState.provisionalTiles.keys).toSet());
-    return ProvisionalResult(provisionalWords, enclosedAreas);
+    final coorsBefore = game.state.placedTiles.keys.toSet();
+    final coorsAfter = game.state.placedTiles.keys.followedBy(localState.provisionalTiles.keys).toSet();
+    final enclosedAreas = Util.findNewEnclosedEmptyAreas(coorsBefore, coorsAfter);
+    final largestNewRect = Util.findLargestNewRectangle(coorsBefore, coorsAfter);
+    return ProvisionalResult(provisionalWords, enclosedAreas, largestNewRect);
   }
 }
 
 class ProvisionalResult {
   final List<ProvisionalWord> words;
   final List<Set<Point<int>>> enclosedAreas;
+  final RectInt? largestNewRect;
 
-  ProvisionalResult(this.words, this.enclosedAreas);
+  ProvisionalResult(this.words, this.enclosedAreas, this.largestNewRect);
 
   int score() {
     int total = 0;
@@ -87,6 +91,9 @@ class ProvisionalResult {
     }
     for (final area in enclosedAreas) {
       total += 10 + (pow(area.length, 1.5) / 2.0).floor();
+    }
+    if (largestNewRect != null) {
+      total += (pow(largestNewRect!.area, 2) / 2.0).floor();
     }
     return total;
   }

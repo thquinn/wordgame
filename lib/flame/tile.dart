@@ -1,29 +1,53 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/color_matrix_hsvc.dart';
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
+import 'package:wordgame/util.dart';
 
 class TileManager extends PositionComponent with HasGameRef<WordGame> {
+    static late TileManager instance;
     static int updates = 0;
 
     late WordGameState appState;
     Map<Point<int>, TileWrapper> tiles = {};
     Set<Point<int>> newCoors = {};
+    Map<Point<int>, double> tileBlockTimes = {};
+
+    @override
+    FutureOr<void> onLoad() {
+      instance = this;
+    }
 
     @override
     void onMount() {
       super.onMount();
       appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
       appState.addListener(() => update(0)); // get notified changes on the same frame they happen
+    }
+
+    void gameDelta(Game oldGame, Game newGame) {
+      if (oldGame.id != newGame.id) return;
+      final largestNewRect = Util.findLargestNewRectangle(oldGame.state.placedTiles.keys.toSet(), newGame.state.placedTiles.keys.toSet());
+      if (largestNewRect != null) {
+        add(TileBlock(largestNewRect));
+        for (int x = largestNewRect.upperLeft.x; x < largestNewRect.right; x++) {
+          for (int y = largestNewRect.upperLeft.y; y < largestNewRect.bottom; y++) {
+            tileBlockTimes[Point(x, y)] = TileBlock.LIFETIME;
+          }
+        }
+      }
     }
 
     @override
@@ -47,6 +71,9 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
       if (tiles.isNotEmpty) {
         updates++;
       }
+      // Update tile blocks.
+      tileBlockTimes.removeWhere((k, v) => v <= dt);
+      tileBlockTimes = tileBlockTimes.map((k, v) => MapEntry(k, v - dt));
     }
 }
 
@@ -125,6 +152,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
   late TextComponent textComponent;
   late Sprite spriteTile, spriteTilePlaced, spriteProvisional;
   double lift = 0;
+  Effect? placementEffect;
 
   final TextPaint styleTile = TextPaint(
     style: TextStyle(
@@ -164,6 +192,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
 
   @override
   void update(double dt) {
+    final tileManager = (parent!.parent as TileManager);
     LocalState localState = appState.localState!;
     TileState newState = localState.provisionalTiles.containsKey(coor) ? TileState.provisional : appState.game!.state.placedTiles.containsKey(coor) ? TileState.played : TileState.removed;
     if (newState == TileState.removed) {
@@ -173,13 +202,15 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       tileState = newState;
       // Start placement animation.
       if (tileState == TileState.played && TileManager.updates > 20) {
-        final newCoors = (parent!.parent as TileManager).newCoors;
-        final minX = newCoors.map((e) => e.x).reduce(min);
-        final minY = newCoors.map((e) => e.y).reduce(min);
-        final delay = max(coor.x - minX, coor.y - minY) * .1;
-        lift = 1 + delay * placementAnimationSpeed;
-        opacity = 0;
-        add(OpacityEffect.fadeIn(EffectController(startDelay: delay, duration: .25)));
+        final newCoors = tileManager.newCoors;
+        if (newCoors.isNotEmpty) {
+          final minX = newCoors.map((e) => e.x).reduce(min);
+          final minY = newCoors.map((e) => e.y).reduce(min);
+          final delay = max(coor.x - minX, coor.y - minY) * .1;
+          lift = 1 + delay * placementAnimationSpeed;
+          opacity = 0;
+          add(placementEffect = OpacityEffect.fadeIn(EffectController(startDelay: delay, duration: .25)));
+        }
       }
       // Set sprite and text.
       sprite = tileState == TileState.provisional ? spriteProvisional : lift > 0 ? spriteTile : spriteTilePlaced;
@@ -206,6 +237,8 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
         sprite = spriteTilePlaced;
         textComponent.textRenderer = styleTile;
       } else {
+        // Would love to not create these every frame for every tile, but I don't see how to independently change
+        // the opacity of TextComponents otherwise. TextBoxComponents, sure, but...
         final styleFade = TextPaint(
           style: TextStyle(
             fontSize: .66,
@@ -216,7 +249,77 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
         textComponent.textRenderer = styleFade;
       }
     }
+    // Hide for tile blocks.
+    if (tileManager.tileBlockTimes.containsKey(coor)) {
+      opacity = clampDouble(opacity - 10 * dt, 0, 1);
+    } else if (placementEffect?.parent == null) {
+      opacity = clampDouble(opacity + 10 * dt, 0, 1);
+    }
   }
 }
-
 enum TileState { unknown, provisional, played, removed }
+
+class TileBlock extends PositionComponent {
+  static const double LIFETIME = 1.5;
+  static final Curve OPACITY_MULTIPLIER_CURVE = CatmullRomCurve.precompute([
+    Offset(.2, .5),
+    Offset(.9, .6),
+  ]);
+
+  final RectInt rectInt;
+  final RoundedRectangle roundedRect;
+  late Paint gradientPaint;
+  late AlphaNineTileBox edgeBox;
+  late RectangleComponent shine;
+  double t = 0;
+
+  TileBlock(this.rectInt) : roundedRect = RoundedRectangle.fromLTRBR(
+    rectInt.left.toDouble() - .42,
+    rectInt.top.toDouble() - .48,
+    rectInt.right.toDouble() - .59,
+    rectInt.bottom.toDouble() - .645,
+    0.17
+  );
+
+  @override
+  FutureOr<void> onLoad() async {
+    priority = -1;
+    Sprite edgeSprite = await Sprite.load('tile_placed_edge.png');
+    edgeBox = AlphaNineTileBox(edgeSprite, opacity: 0, leftWidth: 64, topHeight: 100, rightWidth: 64, bottomHeight: 100);
+    add(ScaledNineTileBoxComponent(.00375)..nineTileBox = edgeBox..position = Vector2(roundedRect.center.x, roundedRect.bottom + 0.145)..size = Vector2(roundedRect.width + .16, 2)..anchor = Anchor.bottomCenter);
+    gradientPaint = Paint();
+    add(RoundedRectangleComponent(roundedRect, paint: gradientPaint));
+    final shineTravelOffset = Vector2(roundedRect.width * 0.6 + roundedRect.height * 0.2 + 1.25, 0);
+    final clip = ClipComponent(builder: (size) => roundedRect, children: [
+      shine = RectangleComponent(
+        paint: Paint()..color = BasicPalette.white.color.withOpacity(0.2),
+        size: Vector2(roundedRect.width * 0.33, 20),
+        angle: pi / 8,
+        position: roundedRect.center - shineTravelOffset,
+        anchor: Anchor.center,
+      )..add(MoveEffect.to(roundedRect.center + shineTravelOffset, EffectController(duration: LIFETIME, curve: Curves.easeInOutCirc)))
+    ]);
+    add(clip);
+  }
+
+  @override
+  void update(double dt) {
+    t += dt;
+    if (t >= LIFETIME) {
+      removeFromParent();
+      return;
+    }
+    double p = 2 * t / LIFETIME;
+    if (p > 1) p = 2 - p;
+    p = clampDouble(p, 0, 1);
+    p = OPACITY_MULTIPLIER_CURVE.transform(p);
+    final topOpacityBase = 0.15 + 0.1 * t / LIFETIME;
+    final bottomOpacityBase = 0.45 + 0.1 * t / LIFETIME;
+    const topShineOpacity = 0.7;
+    const bottomShineOpacity = 0.9;
+    final topOpacity = p < .5 ? topOpacityBase * p * 2 : lerpDouble(topOpacityBase, topShineOpacity, (p - 0.5) * 2)!;
+    final bottomOpacity = p < .5 ? bottomOpacityBase * p * 2 : lerpDouble(bottomOpacityBase, bottomShineOpacity, (p - 0.5) * 2)!;
+    gradientPaint.shader = ui.Gradient.linear(Offset(0, roundedRect.top), Offset(0, roundedRect.bottom), [Color.fromRGBO(255, 255, 255, topOpacity), Color.fromRGBO(255, 255, 255, bottomOpacity)]);
+    edgeBox.paint.color = BasicPalette.white.color.withOpacity(clampDouble(p * 2 * .4, 0, .3));
+  }
+}

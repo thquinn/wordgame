@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/text.dart';
 import 'package:flutter/animation.dart';
@@ -88,6 +89,54 @@ class CurveAverager extends Curve {
   @override
   double transformInternal(double t) {
     return curves.map((c) => c.transform(t)).reduce((a, b) => a + b) / curves.length;
+  }
+}
+
+class RoundedRectangleComponent extends ShapeComponent {
+  final RoundedRectangle rect;
+  late Path path;
+
+  RoundedRectangleComponent(this.rect, {super.children, super.paint}) {
+    path = rect.asPath();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    canvas.drawPath(path, paint);
+  }
+}
+
+class PathComponent extends ShapeComponent {
+  Path path;
+
+  PathComponent(this.path, {super.paint});
+
+  @override
+  void render(Canvas canvas) {
+    canvas.drawPath(path, paint);
+  }
+}
+
+class ClipPathComponent extends ClipComponent {
+  Path path;
+
+  ClipPathComponent(this.path, {super.children, super.priority}) : super(builder: (size) => Circle(Vector2.zero(), 1));
+
+  @override Future<void> onLoad();
+
+  @override
+  void render(Canvas canvas) {
+    canvas.clipPath(path);
+  }
+
+  @override
+  bool containsPoint(Vector2 point) {
+    return path.contains((point - position).toOffset());
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    return path.contains(point.toOffset());
   }
 }
 

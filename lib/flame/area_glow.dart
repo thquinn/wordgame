@@ -28,7 +28,7 @@ class AreaGlowManager extends PositionComponent {
 
   void gameDelta(Game oldGame, Game newGame) {
     if (oldGame.id != newGame.id) return;
-    for (final coors in Util.FindNewEnclosedEmptyAreas(oldGame.state.placedTiles.keys.toSet(), newGame.state.placedTiles.keys.toSet())) {
+    for (final coors in Util.findNewEnclosedEmptyAreas(oldGame.state.placedTiles.keys.toSet(), newGame.state.placedTiles.keys.toSet())) {
       animateArea(coors);
     }
   }
@@ -63,17 +63,18 @@ class AreaGlowManager extends PositionComponent {
     // Create path.
     final pathOutline = removeColinear(outline);
     pathOutline.addAll(pathOutline.take(3));
-    final path = PathComponent(Paint()
+    final path = PartialPathComponent(Paint()
       ..style = PaintingStyle.stroke
       ..color = Color.fromRGBO(215, 215, 255, 0)
       ..strokeWidth = 0.066
       ..strokeCap = StrokeCap.round
     , removeColinear(pathOutline).map((e) => Vector2(e.x + 0.5, e.y + 0.633)).toList(), false, radius: .25);
+    const delay = 0.5;
     final pathTime = sqrt(path.pathLength) * .066 + .5;
-    path.add(PathStartPercentEffect(EffectController(duration: pathTime, curve: Curves.easeInOut)));
-    path.add(PathEndPercentEffect(EffectController(duration: pathTime, curve: Curves.easeOut)));
+    path.add(PathStartPercentEffect(EffectController(startDelay: delay, duration: pathTime, curve: Curves.easeInOut)));
+    path.add(PathEndPercentEffect(EffectController(startDelay: delay, duration: pathTime, curve: Curves.easeOut)));
     path.add(SequenceEffect([
-      OpacityEffect.fadeIn(EffectController(duration: .1, curve: Curves.easeIn)),
+      OpacityEffect.fadeIn(EffectController(startDelay: delay, duration: .1, curve: Curves.easeIn)),
       OpacityEffect.to(1, EffectController(duration: pathTime - .4)),
       OpacityEffect.fadeOut(EffectController(duration: .2, curve: Curves.easeOut)),
       RemoveEffect(),
@@ -110,8 +111,7 @@ class AreaGlowManager extends PositionComponent {
     }
     (area.children.first as SpriteComponent).makeTransparent();
     area.children.first.add(SequenceEffect([
-      OpacityEffect.to(0, EffectController(duration: pathTime)),
-      OpacityEffect.fadeIn(EffectController(duration: .15, curve: Curves.easeInExpo)),
+      OpacityEffect.fadeIn(EffectController(startDelay: delay + pathTime, duration: .15, curve: Curves.easeInExpo)),
       OpacityEffect.fadeOut(EffectController(duration: .85)),
     ]));
     area.add(RemoveEffect(delay: 4.25));
@@ -133,14 +133,14 @@ class AreaGlowManager extends PositionComponent {
   }
 }
 
-class PathComponent extends Component implements OpacityProvider {
+class PartialPathComponent extends Component implements OpacityProvider {
   Path path;
   late PathMetric pathMetric;
   late double pathLength;
   Paint paint;
   double startPercent = 0, endPercent = 1;
 
-  PathComponent(this.paint, List<Vector2> points, bool closed, {radius = 0}) : path = radius == 0 ? pathFromPoints(points, closed) : roundedPathFromPoints(points, closed, radius) {
+  PartialPathComponent(this.paint, List<Vector2> points, bool closed, {radius = 0}) : path = radius == 0 ? pathFromPoints(points, closed) : roundedPathFromPoints(points, closed, radius) {
     pathMetric = path.computeMetrics().first;
     pathLength = pathMetric.length;
   }
@@ -211,7 +211,7 @@ class PathComponent extends Component implements OpacityProvider {
   }
 }
 
-abstract class PathPercentEffect extends ComponentEffect<PathComponent> {
+abstract class PathPercentEffect extends ComponentEffect<PartialPathComponent> {
   late final Tween<double> _tween;
   late double _original;
 

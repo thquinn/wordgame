@@ -14,6 +14,7 @@ class NotificationManager extends PositionComponent {
   static void enqueueFromBroadcast(String type, Map<String, String> args) {
     if (type == 'word') enqueueWord(args['username']!, args['qualifier']!, args['word']!);
     if (type == 'enclosed_area') enqueueArea(args['username']!, int.parse(args['area']!));
+    if (type == 'tile_block') enqueueTileBlock(args['username']!, args['dimensions']!);
   }
   static void enqueueWord(String username, String qualifier, String word) {
     pending.add(GameNotification([
@@ -28,6 +29,14 @@ class NotificationManager extends PositionComponent {
         BoldTextNode(PlainTextNode(username)),
         PlainTextNode(' surrounded '),
         BoldTextNode(PlainTextNode('$area tiles')),
+        PlainTextNode('!'),
+    ]));
+  }
+  static void enqueueTileBlock(String username, String dimensions) {
+    pending.add(GameNotification([
+        BoldTextNode(PlainTextNode(username)),
+        PlainTextNode(' made a '),
+        BoldTextNode(PlainTextNode('$dimensions block')),
         PlainTextNode('!'),
     ]));
   }

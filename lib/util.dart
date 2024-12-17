@@ -81,14 +81,81 @@ class Util {
     return Vector2(x, y);
   }
 
-  static List<Set<Point<int>>> FindNewEnclosedEmptyAreas(Set<Point<int>> before, Set<Point<int>> after) {
-    final beforeAreas = FindEnclosedEmptyAreas(before);
-    return FindEnclosedEmptyAreas(after).where((afterArea) => beforeAreas.every((beforeArea) => beforeArea.intersection(afterArea).isEmpty)).toList();
+  // Only returns rectangles of weight and height >= 2.
+  static RectInt? findLargestNewRectangle(Set<Point<int>> before, Set<Point<int>> after) {
+    final diff = after.difference(before);
+    if (diff.isEmpty) return null;
+    return diff.map((e) => _findLargestNewRectangleHelper(after, e)).reduce((a, b) => (a?.area ?? 0) >= (b?.area ?? 0) ? a : b);
+  }
+  static RectInt? _findLargestNewRectangleHelper(Set<Point<int>> points, Point<int> coor) {
+    int left = coor.x, right = coor.x;
+    while (points.contains(Point(left - 1, coor.y))) {
+      left--;
+    }
+    while (points.contains(Point(right + 1, coor.y))) {
+      right++;
+    }
+    if (left == right) return null;
+    // Find all spans of filled coors, each a subspan of the one previous.
+    final spans = [Point(left, right)];
+    int minY;
+    for (minY = coor.y - 1; true; minY--) {
+      final span = _findLargestNewRectangleHelperSpan(points, Point(coor.x, minY), spans.first);
+      if (span == null) {
+        minY++;
+        break;
+      }
+      spans.insert(0, span);
+    }
+    for (int y = coor.y + 1; true; y++) {
+      final span = _findLargestNewRectangleHelperSpan(points, Point(coor.x, y), spans.last);
+      if (span == null) break;
+      spans.add(span);
+    }
+    if (spans.length == 1) return null;
+    // Given the sizes of each span, find the indices for the subarray that maximizes len(arr) * min(arr).
+    final spanSizes = spans.map((e) => e.y - e.x + 1).toList();
+    int startIndex = -1, endIndex = -1, rectSize = -1;
+    for (int i = 0; i < spanSizes.length - 1; i++) {
+      for (int j = i + 1; j < spanSizes.length; j++) {
+        // Since every array increases and then decreases, the minimum value of any subarray is guaranteed to be on one of its ends.
+        final minValue = min(spanSizes[i], spanSizes[j]);
+        final area = minValue * (j - i + 1);
+        if (area > rectSize) {
+          startIndex = i;
+          endIndex = j;
+          rectSize = area;
+        }
+      }
+    }
+    
+    final rectY = startIndex + minY;
+    final rectWidth = min(spanSizes[startIndex], spanSizes[endIndex]);
+    final rectHeight = endIndex - startIndex + 1;
+    final rectX = spans.skip(startIndex).take(rectHeight).map((e) => e.x).reduce(max);
+    return RectInt(Point<int>(rectX, rectY), Point<int>(rectWidth, rectHeight));
+  }
+  static Point<int>? _findLargestNewRectangleHelperSpan(Set<Point<int>> points, Point<int> start, Point<int> previousSpan) {
+    if (!points.contains(start)) return null;
+    int left = start.x, right = start.x;
+    while (left > previousSpan.x && points.contains(Point(left - 1, start.y))) {
+      left--;
+    }
+    while (right < previousSpan.y && points.contains(Point(right + 1, start.y))) {
+      right++;
+    }
+    if (left == right) return null;
+    return Point(left, right);
+  }
+
+  static List<Set<Point<int>>> findNewEnclosedEmptyAreas(Set<Point<int>> before, Set<Point<int>> after) {
+    final beforeAreas = findEnclosedEmptyAreas(before);
+    return findEnclosedEmptyAreas(after).where((afterArea) => beforeAreas.every((beforeArea) => beforeArea.intersection(afterArea).isEmpty)).toList();
   }
   static const cardinalDirections = [Point<int>(-1, 0), Point<int>(1, 0), Point<int>(0, -1), Point<int>(0, 1)];
   static const cardinalAndDiagonalDirections = [Point<int>(-1, 0), Point<int>(1, 0), Point<int>(0, -1), Point<int>(0, 1),
                                                 Point<int>(-1, -1), Point<int>(1, -1), Point<int>(-1, 1), Point<int>(1, 1)];
-  static List<Set<Point<int>>> FindEnclosedEmptyAreas(Set<Point<int>> tiles) {
+  static List<Set<Point<int>>> findEnclosedEmptyAreas(Set<Point<int>> tiles) {
     if (tiles.isEmpty) return [];
     final minX = tiles.map((e) => e.x).reduce(min);
     final maxX = tiles.map((e) => e.x).reduce(max);
@@ -125,4 +192,19 @@ class Util {
     }
     return areas;
   }
+}
+
+class RectInt {
+  final Point<int> upperLeft;
+  final Point<int> size;
+
+  RectInt(this.upperLeft, this.size);
+
+  int get left => upperLeft.x;
+  int get top => upperLeft.y;
+  int get right => upperLeft.x + size.x;
+  int get bottom => upperLeft.y + size.y;
+  int get width => right - left;
+  int get height => bottom - top;
+  int get area => width * height;
 }

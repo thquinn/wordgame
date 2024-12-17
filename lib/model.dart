@@ -132,6 +132,7 @@ class LocalState {
       while (rack.length < PARTIAL_REFILL) {
         drawTile();
       }
+      rack.sort();
     }
   }
   spendOverflowTiles() {

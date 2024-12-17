@@ -33,7 +33,10 @@ class StatusPanels extends PositionComponent with HasGameRef<WordGame> {
         final duration = appState.game?.endsAt.difference(DateTime.now());
         if (duration == null) return '';
         if (duration.isNegative) return '0:00';
-        return '${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}';
+        final milliseconds = duration.inMilliseconds;
+        final minutes = milliseconds ~/ (60 * 1000);
+        final seconds = (milliseconds.remainder(60 * 1000) / 1000).ceil();
+        return '$minutes:${seconds.toString().padLeft(2, '0')}';
       }
     ));
   }

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wordgame/flame/tile.dart';
 import 'package:wordgame/util.dart';
 import 'flame/area_glow.dart';
 import 'package:wordgame/flame/notification.dart';
@@ -51,6 +52,7 @@ class WordGameState extends ChangeNotifier {
       callback: (payload) async {
         final updatedGame = Game.fromJson(payload.newRecord);
         if (game != null && updatedGame != null) {
+          TileManager.instance.gameDelta(game!, updatedGame);
           AreaGlowManager.instance.gameDelta(game!, updatedGame);
         }
         if (game != null && game!.id != updatedGame!.id) {
@@ -101,6 +103,15 @@ class WordGameState extends ChangeNotifier {
       localState!.drawTile(overflow: true);
       localState!.assister = payload['sender'];
     }
+  }
+  sendNotification(String notifType, Map<String, dynamic> args) async {
+    final payload = {
+      'sender': localState!.username,
+      'notiftype': notifType,
+      'args': args
+    };
+    onReceiveNotification(payload);
+    await channel!.sendBroadcastMessage(event: 'notification', payload: payload);
   }
   onReceiveNotification(payload) {
     NotificationManager.enqueueFromBroadcast(payload['notiftype'], Util.castJsonToStringMap(payload['args']));
@@ -159,7 +170,7 @@ class WordGameState extends ChangeNotifier {
     if (!gameIsActive()) return;
     do {
       localState?.cursor += Point<int>(localState?.cursorHorizontal == true ? 1 : 0, localState?.cursorHorizontal == true ? 0 : 1);
-    } while (game!.state.placedTiles.containsKey(localState!.cursor));
+    } while (game!.state.placedTiles.containsKey(localState!.cursor) || localState!.provisionalTiles.containsKey(localState!.cursor));
     notifyListeners();
     await channel!.track(localState!.toPresenceJson());
   }
@@ -219,28 +230,26 @@ class WordGameState extends ChangeNotifier {
       final assistUsernames = provisionalResult.words.expand((pw) => pw.usernames).toSet().toList();
       assistUsernames.remove(localState!.username);
       if (assistUsernames.isNotEmpty) {
-        channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
+        await channel!.sendBroadcastMessage(event: 'assist', payload: {'sender': localState!.username, 'usernames': assistUsernames});
       }
       for (final wordQualifierPair in provisionalResult.words.map((e) => [e.word, e.getNotificationQualifier()]).where((e) => e[1] != null)) {
-        channel!.sendBroadcastMessage(event: 'notification', payload: {
-          'sender': localState!.username,
-          'notiftype': 'word',
-          'args': {
-            'username': localState!.username,
-            'qualifier': wordQualifierPair.last,
-            'word': wordQualifierPair.first,
-          }
+        await sendNotification('word', {
+          'username': localState!.username,
+          'qualifier': wordQualifierPair.last,
+          'word': wordQualifierPair.first,
         });
       }
       final enclosedArea = provisionalResult.enclosedAreas.isEmpty ? 0 : provisionalResult.enclosedAreas.map((e) => e.length).reduce((a, b) => a + b);
       if (enclosedArea > 1) {
-        channel!.sendBroadcastMessage(event: 'notification', payload: {
-          'sender': localState!.username,
-          'notiftype': 'enclosed_area',
-          'args': {
-            'username': localState!.username,
-            'area': enclosedArea,
-          }
+        await sendNotification('enclosed_area', {
+          'username': localState!.username,
+          'area': enclosedArea,
+        });
+      }
+      if ((provisionalResult.largestNewRect?.area ?? 0) > 4) {
+        await sendNotification('tile_block', {
+          'username': localState!.username,
+          'dimensions': '${provisionalResult.largestNewRect!.width}×${provisionalResult.largestNewRect!.height}',
         });
       }
     }
