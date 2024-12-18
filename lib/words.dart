@@ -100,7 +100,7 @@ class ProvisionalResult {
 }
 
 class ProvisionalWord {
-  static final List<String?> COLOR_QUALIFIERS = [null, null, null, 'tricolor', 'tetracolor', 'quintacolor', 'hexacolor', 'heptacolor', 'octacolor', 'enneacolor', 'decacolor', 'polycolor'];
+  static final List<String?> COLOR_QUALIFIERS = [null, null, null, 'tricolor', 'tetracolor', 'quintacolor', 'hexacolor', 'heptacolor', 'octacolor', 'enneacolor', 'decacolor', 'hyperpolycolor'];
 
   final String word;
   final List<String> usernames;

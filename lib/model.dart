@@ -28,10 +28,11 @@ class Game {
 class GameState {
   int score = 0;
   Map<Point<int>, PlacedTile> placedTiles;
+  Map<Point<int>, PickupType> pickups;
 
-  GameState.empty() : placedTiles = {};
+  GameState.empty() : placedTiles = {}, pickups = {};
 
-  GameState._(this.score, this.placedTiles);
+  GameState._(this.score, this.placedTiles, this.pickups);
 
   factory GameState(Map<String, dynamic> json) {
     final score = json['score'];
@@ -41,7 +42,13 @@ class GameState {
       final coor = Point<int>(placedTilesList[i], placedTilesList[i + 1]);
       placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
-    return GameState._(score, placedTiles);
+    List pickupsList = json['pickups'] ?? [];
+    final pickups = <Point<int>, PickupType>{};
+    for (var i = 0; i < pickupsList.length; i += 3) {
+      final coor = Point<int>(pickupsList[i], pickupsList[i + 1]);
+      pickups[coor] = PickupType.values.byName(pickupsList[i + 2]);
+    }
+    return GameState._(score, placedTiles, pickups);
   }
 
   jsonAfterProvisional(LocalState presence, ProvisionalResult provisionalResult) {
@@ -53,15 +60,23 @@ class GameState {
     for (final entry in presence.provisionalTiles.entries) {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
+    final pickupList = [];
+    for (final entry in pickups.entries) {
+      pickupList.addAll([entry.key.x, entry.key.y, entry.value.toString().split('.').last]);
+    }
     return {
       'score': score + provisionalResult.score(),
       'placed_tiles': letterList,
+      'pickups': pickupList,
     };
   }
 }
 class PlacedTile {
   final String letter, username;
   PlacedTile(this.letter, this.username);
+}
+enum PickupType {
+  wildcard
 }
 
 class LocalState {
