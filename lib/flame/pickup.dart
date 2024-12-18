@@ -3,7 +3,10 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/experimental.dart';
+import 'package:flame/palette.dart';
 import 'package:provider/provider.dart';
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
@@ -17,7 +20,6 @@ class PickupManager extends PositionComponent with HasGameRef<WordGame> {
     super.onMount();
     appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     appState.addListener(() => update(0)); // get notified changes on the same frame they happen
-    add(Pickup(appState, Point(-5, -5)));
   }
 
     @override
@@ -42,36 +44,63 @@ class PickupManager extends PositionComponent with HasGameRef<WordGame> {
 }
 
 class Pickup extends PositionComponent with HasVisibility {
-  static Paint? paintTop;
+  static const double RADIUS = 0.17;
+  static const double SIDE_HEIGHT = 0.0733;
+  static RRect RRECT = RRect.fromRectAndRadius(Rect.fromLTRB(.08, .02, .92, .84), Radius.circular(RADIUS));
+  static Path pathTop = RoundedRectangle.fromRRect(RRECT).asPath();
+  static Path pathSide = Path()..moveTo(RRECT.left, RRECT.bottom - RADIUS)
+                               ..arcTo(Rect.fromCircle(center: Offset(RRECT.left + RADIUS, RRECT.bottom - RADIUS), radius: RADIUS), pi, pi / -2, false)
+                               ..arcTo(Rect.fromCircle(center: Offset(RRECT.right - RADIUS, RRECT.bottom - RADIUS), radius: RADIUS), pi / 2, pi / -2, false)
+                               ..arcTo(Rect.fromCircle(center: Offset(RRECT.right - RADIUS, RRECT.bottom - RADIUS + SIDE_HEIGHT), radius: RADIUS), 0, pi / 2, false)
+                               ..arcTo(Rect.fromCircle(center: Offset(RRECT.left + RADIUS, RRECT.bottom - RADIUS + SIDE_HEIGHT), radius: RADIUS), pi / 2, pi / 2, false)
+                               ..close();
   static final paintIcon = Paint()..colorFilter = ColorFilter.mode(Color.fromRGBO(142, 138, 208, 1), BlendMode.modulate);
 
   final WordGameState appState;
   final Point<int> coor;
+  late SpriteComponent stripesTop, stripesSide, icon;
+  double t = 0.0;
 
   Pickup(this.appState, this.coor);
 
   @override
   FutureOr<void> onLoad() async {
-    /*
-    if (paintTop == null) {
-      FragmentProgram fp = await FragmentProgram.fromAsset('shaders/pickup.frag');
-      FragmentShader fs = fp.fragmentShader();
-      paintTop = Paint()..shader = fs;
-    }
     position = Vector2(coor.x - 0.5, coor.y - 0.5);
-    final spriteTop = await Sprite.load('tile_placed_top.png');
-    add(SpriteComponent(
-      paint: paintTop,
-      sprite: spriteTop,
-      size: Vector2.all(1),
-    ));
-    */
+    final sprite = await Sprite.load('pickup_stripes.png');
+    add(ClipPathComponent(
+      pathTop,
+      children: [stripesTop = SpriteComponent(
+        anchor: Anchor(.1, 0),
+        size: Vector2.all(1.5),
+        paint: BasicPalette.white.paint()..filterQuality = FilterQuality.high,
+        sprite: sprite,
+      )..opacity = 0.8
+    ]));
+    add(ClipPathComponent(
+      pathSide,
+      children: [stripesSide = SpriteComponent(
+        anchor: Anchor.topRight,
+        size: stripesTop.size,
+        scale: Vector2(-1, 1),
+        paint: BasicPalette.white.paint()..filterQuality = FilterQuality.high,
+        sprite: sprite,
+      )..opacity = 0.4
+    ]));
     PickupType type = PickupType.wildcard;//appState.game!.state.pickups[coor]!;
     final spriteIcon = await Sprite.load('pickup_${type.toString().split('.').last}.png');
-    add(SpriteComponent(
+    add(icon = SpriteComponent(
       paint: paintIcon,
       sprite: spriteIcon,
       size: Vector2.all(1),
     ));
+  }
+
+  @override
+  void update(double dt) {
+    isVisible = !appState.localState!.provisionalTiles.containsKey(coor);
+    t += dt;
+    stripesTop.position = Vector2((t * .1) % (0.065 * stripesTop.size.x), 0);
+    stripesSide.position = Vector2((t * -.1) % (0.065 * stripesSide.size.x), 0);
+    icon.opacity = appState.localState!.cursor == coor ? 0 : 1;
   }
 } 

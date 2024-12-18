@@ -152,10 +152,14 @@ class WordGameState extends ChangeNotifier {
   tryPlayingTile(String letter) async {
     if (!gameIsActive()) return;
     final localState = this.localState!;
+    final provisionalTiles = localState.provisionalTiles;
+    final rack = localState.rack;
     // Must have enough of the letter on rack.
-    int numOnRack = localState.rack.where((item) => item == letter).length;
-    int numProvisional = localState.provisionalTiles.values.where((item) => item == letter).length;
-    if (numOnRack <= numProvisional) {
+    final numOnRack = rack.where((item) => item == letter).length;
+    final numProvisional = provisionalTiles.values.where((item) => item == letter).length;
+    final numWildcards = rack.where((item) => item == '*').length;
+    final numWildcardsUsed = localState.countProvisionalWildcards();
+    if (numOnRack <= numProvisional && numWildcards <= numWildcardsUsed) {
       return;
     }
     // Can't place on top of an existing tile.
@@ -219,10 +223,11 @@ class WordGameState extends ChangeNotifier {
     // Yeah, I know that!
     if (results.isNotEmpty) {
       // Finalize move.
-      for (final letter in provisionalTiles.values) {
-        localState!.rack.remove(letter);
+      for (final letter in provisionalResult.provisionalTiles.values) {
+        localState!.loseLetterOrWildcard(letter);
       }
       localState!.partiallyFillRackIfEmpty();
+      localState!.pickup(provisionalResult.pickups);
       localState!.spendOverflowTiles();
       provisionalTiles.clear();
       await channel!.track(localState!.toPresenceJson());

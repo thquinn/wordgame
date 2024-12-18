@@ -61,9 +61,6 @@ flutter:
   assets:
     - assets/images/
     - assets/words.txt
-  
-  shaders:
-    - assets/shaders/pickup.frag
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

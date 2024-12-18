@@ -120,7 +120,7 @@ class PathComponent extends ShapeComponent {
 class ClipPathComponent extends ClipComponent {
   Path path;
 
-  ClipPathComponent(this.path, {super.children, super.priority}) : super(builder: (size) => Circle(Vector2.zero(), 1));
+  ClipPathComponent(this.path, {super.children, super.position,  super.priority}) : super(builder: (size) => Circle(Vector2.zero(), 1));
 
   @override Future<void> onLoad();
 
@@ -146,5 +146,11 @@ extension PointNormalization on Point {
       x < 0 ? -1 : x == 0 ? 0 : 1,
       y < 0 ? -1 : y == 0 ? 0 : 1
     );
+  }
+}
+
+extension PointDistances on Point<int> {
+  int manhattanDistanceTo(Point<int> other) {
+    return (x - other.x).abs() + (y - other.y).abs();
   }
 }

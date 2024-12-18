@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/util.dart';
 import 'words.dart';
 
@@ -57,13 +58,35 @@ class GameState {
     for (final entry in placedTiles.entries) {
       letterList.addAll([entry.key.x, entry.key.y, entry.value.letter, entry.value.username]);
     }
-    for (final entry in presence.provisionalTiles.entries) {
+    for (final entry in provisionalResult.provisionalTiles.entries) {
       letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     final pickupList = [];
     for (final entry in pickups.entries) {
+      if (provisionalResult.provisionalTiles.containsKey(entry.key)) continue; // Pickup has been picked up!
       pickupList.addAll([entry.key.x, entry.key.y, entry.value.toString().split('.').last]);
     }
+    // Spawn pickups.
+    List<Point<int>> tileCoors = placedTiles.keys.followedBy(provisionalResult.provisionalTiles.keys).toList();
+    final desiredPickupCount = (tileCoors.length / 20.0).floor();
+    final pickupsToSpawn = desiredPickupCount - pickupList.length ~/ 3;
+    if (pickupsToSpawn > 0) {
+      Set<Point<int>> coorsToAvoid = tileCoors.followedBy(pickups.keys).toSet();
+      for (int i = 0; i < pickupsToSpawn; i++) {
+        // Find a coordinate at least 5 spaces from everything on the board.
+        while (true) {
+          Point<int> spawnCandidate = tileCoors[Util.random.nextInt(tileCoors.length)];
+          final distance = 6 + Util.random.nextInt(2);
+          final xySplit = Util.random.nextInt(distance + 1);
+          spawnCandidate = Point(spawnCandidate.x + xySplit * (Util.random.nextBool() ? -1 : 1), spawnCandidate.y + (distance - xySplit) * (Util.random.nextBool() ? -1 : 1));
+          if (coorsToAvoid.every((e) => e.manhattanDistanceTo(spawnCandidate) >= 5)) {
+            pickupList.addAll([spawnCandidate.x, spawnCandidate.y, PickupType.wildcard.toString().split('.').last]);
+            break;
+          }
+        }
+      }
+    }
+    // Return.
     return {
       'score': score + provisionalResult.score(),
       'placed_tiles': letterList,
@@ -110,6 +133,7 @@ class LocalState {
     provisionalTiles.clear();
     partiallyFillRackIfEmpty();
     rack.sort();
+    rack.add('*');
   }
 
   drawTile({bool overflow = false}) {
@@ -142,12 +166,31 @@ class LocalState {
     }
   }
 
+  countProvisionalWildcards() {
+    return provisionalTiles.isEmpty ? 0 : provisionalTiles.values.toSet().map((e) => max(0, provisionalTiles.values.where((f) => e == f).length - rack.where((f) => e == f).length)).reduce((a, b) => a + b);
+  }
+
+  loseLetterOrWildcard(String letter) {
+    rack.remove(rack.contains(letter) ? letter : '*');
+  }
+
   partiallyFillRackIfEmpty() {
     if (rack.isEmpty) {
       while (rack.length < PARTIAL_REFILL) {
         drawTile();
       }
       rack.sort();
+    }
+  }
+  pickup(List<PickupType> pickups) {
+    for (final pickup in pickups) {
+      switch (pickup) {
+        case PickupType.wildcard:
+          if (rack.length < rackSize) {
+            rack.add('*');
+          }
+          break;
+      }
     }
   }
   spendOverflowTiles() {

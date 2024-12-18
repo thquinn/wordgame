@@ -145,7 +145,7 @@ class RackTile extends SpriteComponent {
     final letter = localState.rack[index];
     textComponent.text = letter.toUpperCase();
     // Check if provisional.
-    int numOfLetter = localState.provisionalTiles.values.where((item) => item == letter).length;
+    int numOfLetter = letter == '*' ? localState.countProvisionalWildcards() : localState.provisionalTiles.values.where((item) => item == letter).length;
     bool isProvisional = numOfLetter > 0;
     for (int i = index - 1; i >= 0; i--) {
       if (localState.rack[i] == letter) {

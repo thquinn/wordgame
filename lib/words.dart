@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 import 'package:wordgame/util.dart';
 
@@ -43,21 +44,22 @@ class Words {
     final List<ProvisionalWord> provisionalWords = [];
     final game = wordGameState.game!;
     final localState = wordGameState.localState!;
+    final provisionalTiles = Map<Point<int>, String>.from(localState.provisionalTiles);
     // Check horizontal and vertical words.
     for (final direction in [Point(1, 0), Point(0, 1)]) {
-      final toCheck = localState.provisionalTiles.keys.toList();
+      final toCheck = provisionalTiles.keys.toList();
       while (toCheck.isNotEmpty) {
         String word = '';
         final Set<String> usernames = { localState.username };
         // Find the leftmost tile of the word.
         Point<int> point = toCheck.first;
-        while (game.state.placedTiles.containsKey(point) || localState.provisionalTiles.containsKey(point)) {
+        while (game.state.placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
           point -= direction;
         }
         point += direction;
         // Put the letters and usernames together.
-        while (game.state.placedTiles.containsKey(point) || localState.provisionalTiles.containsKey(point)) {
-          word += game.state.placedTiles[point]?.letter ?? localState.provisionalTiles[point]!;
+        while (game.state.placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
+          word += game.state.placedTiles[point]?.letter ?? provisionalTiles[point]!;
           if (game.state.placedTiles.containsKey(point)) {
             usernames.add(game.state.placedTiles[point]!.username);
           }
@@ -69,20 +71,23 @@ class Words {
         }
       }
     }
+    final pickups = game.state.pickups.entries.where((kvp) => provisionalTiles.containsKey(kvp.key)).map((kvp) => kvp.value).toList();
     final coorsBefore = game.state.placedTiles.keys.toSet();
     final coorsAfter = game.state.placedTiles.keys.followedBy(localState.provisionalTiles.keys).toSet();
     final enclosedAreas = Util.findNewEnclosedEmptyAreas(coorsBefore, coorsAfter);
     final largestNewRect = Util.findLargestNewRectangle(coorsBefore, coorsAfter);
-    return ProvisionalResult(provisionalWords, enclosedAreas, largestNewRect);
+    return ProvisionalResult(provisionalTiles, provisionalWords, pickups, enclosedAreas, largestNewRect);
   }
 }
 
 class ProvisionalResult {
+  final Map<Point<int>, String> provisionalTiles;
   final List<ProvisionalWord> words;
+  final List<PickupType> pickups;
   final List<Set<Point<int>>> enclosedAreas;
   final RectInt? largestNewRect;
 
-  ProvisionalResult(this.words, this.enclosedAreas, this.largestNewRect);
+  ProvisionalResult(this.provisionalTiles, this.words, this.pickups, this.enclosedAreas, this.largestNewRect);
 
   int score() {
     int total = 0;
