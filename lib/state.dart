@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:html' as html;
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -91,6 +92,7 @@ class WordGameState extends ChangeNotifier {
       .onBroadcast(event: 'assist', callback: onReceiveAssist)
       .subscribe((status, error) async {
         if (status != RealtimeSubscribeStatus.subscribed) return;
+        html.window.history.pushState(null, '', '?room=$roomID');
         await channel!.track(localState!.toPresenceJson());
       });
     notifyListeners();

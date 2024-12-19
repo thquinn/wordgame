@@ -7,7 +7,6 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wordgame/flame/extensions.dart';
-import 'package:wordgame/state.dart';
 
 class ControlAnchor extends AlignComponent {
   ControlAnchor() : super(

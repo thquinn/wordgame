@@ -17,6 +17,7 @@ analyzer:
     constant_identifier_names: ignore
     invalid_use_of_visible_for_testing_member: ignore
     unnecessary_breaks: ignore
+    avoid_web_libraries_in_flutter: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the
