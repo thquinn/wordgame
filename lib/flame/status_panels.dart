@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -35,7 +36,7 @@ class StatusPanels extends PositionComponent with HasGameRef<WordGame> {
         if (duration.isNegative) return '0:00';
         final milliseconds = duration.inMilliseconds;
         final minutes = milliseconds ~/ (60 * 1000);
-        final seconds = (milliseconds.remainder(60 * 1000) / 1000).ceil();
+        final seconds = min(59, (milliseconds.remainder(60 * 1000) / 1000).ceil());
         return '$minutes:${seconds.toString().padLeft(2, '0')}';
       }
     ));

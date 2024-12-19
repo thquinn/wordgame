@@ -88,7 +88,7 @@ class GameState {
     }
     // Return.
     return {
-      'score': score + provisionalResult.score(),
+      'score': score + provisionalResult.score().total,
       'placed_tiles': letterList,
       'pickups': pickupList,
     };
@@ -132,8 +132,12 @@ class LocalState {
     bagDistribution = List<double>.from(Words.letterDistribution);
     provisionalTiles.clear();
     partiallyFillRackIfEmpty();
-    rack.sort();
     rack.add('*');
+    sortRack();
+  }
+
+  sortRack() {
+    rack.sort((a, b) => a == '*' ? 1 : b == '*' ? -1 : a.compareTo(b));
   }
 
   drawTile({bool overflow = false}) {
@@ -179,7 +183,7 @@ class LocalState {
       while (rack.length < PARTIAL_REFILL) {
         drawTile();
       }
-      rack.sort();
+      sortRack();
     }
   }
   pickup(List<PickupType> pickups) {

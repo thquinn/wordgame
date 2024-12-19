@@ -92,7 +92,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     }
     // Sort rack.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.digit1) {
-      appState.localState!.rack.sort();
+      appState.localState!.sortRack();
     }
     // DEBUG: Start a new game.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.space) {
@@ -129,6 +129,12 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
       TileManager.instance.gameDelta(fakeOldGame, newGame);
       AreaGlowManager.instance.gameDelta(fakeOldGame, newGame);
       return false;
+    }
+    // DEBUG: Get a wildcard.
+    if (keyDown && event.logicalKey == LogicalKeyboardKey.f8) {
+      if (appState.localState!.rack.length < appState.localState!.rackSize) {
+        appState.localState!.rack.add('*');
+      }
     }
     return true;
   }

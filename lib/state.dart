@@ -125,10 +125,11 @@ class WordGameState extends ChangeNotifier {
     // Finish existing game.
     if (game != null) {
       final version = game!.version;
-      final result = await Supabase.instance.client.from('games').update({
+      final results = await Supabase.instance.client.from('games').update({
         'active': false
-      }).eq('channel', roomID!).eq('version', version).eq('active', true).select().maybeSingle();
-      if (result == null) {
+      }).eq('channel', roomID!).eq('version', version).eq('active', true).select();
+      // NOTE: same strange error with  maybeSingle() here: "The result contains 0 rows"
+      if (results.isEmpty) {
         return;
       }
     }
@@ -189,6 +190,7 @@ class WordGameState extends ChangeNotifier {
     } while (game!.state.placedTiles.containsKey(localState!.cursor));
     localState!.provisionalTiles.remove(localState!.cursor);
     await channel!.track(localState!.toPresenceJson());
+    notifyListeners();
   }
   confirmProvisionalTiles() async {
     if (!gameIsActive()) return;

@@ -32,7 +32,6 @@ class TileManager extends PositionComponent with HasGameRef<WordGame> {
 
     @override
     void onMount() {
-      super.onMount();
       appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
       appState.addListener(() => update(0)); // get notified changes on the same frame they happen
     }

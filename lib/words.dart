@@ -89,35 +89,48 @@ class ProvisionalResult {
 
   ProvisionalResult(this.provisionalTiles, this.words, this.pickups, this.enclosedAreas, this.largestNewRect);
 
-  int score() {
+  ProvisionalScore score() {
     int total = 0;
-    for (final word in words) {
-      total += word.score();
+    final List<ProvisionalScoreDisplayLine> displayLines = [];
+    final sortedWords = List<ProvisionalWord>.from(words)..sort((a, b) => a.word.length != b.word.length ? b.word.length.compareTo(a.word.length) : a.word.compareTo(b.word));
+    for (final word in sortedWords) {
+      final line = word.score();
+      total += line.score;
+      displayLines.add(line);
     }
     for (final area in enclosedAreas) {
-      total += 10 + (pow(area.length, 1.5) / 2.0).floor();
+      final score = 10 + (pow(area.length, 1.5) / 2.0).floor();
+      total += score;
+      displayLines.add(ProvisionalScoreDisplayLine(true, score, '', '${area.length} surrounded', score.toString()));
     }
     if (largestNewRect != null) {
-      total += (pow(largestNewRect!.area, 2) / 2.0).floor();
+      final score = (pow(largestNewRect!.area, 2) / 2.0).floor();
+      total += score;
+      displayLines.add(ProvisionalScoreDisplayLine(true, score, '', '${largestNewRect!.width}×${largestNewRect!.height} block', score.toString()));
     }
-    return total;
+    return ProvisionalScore(total, displayLines);
   }
 }
 
 class ProvisionalWord {
-  static final List<String?> COLOR_QUALIFIERS = [null, null, null, 'tricolor', 'tetracolor', 'quintacolor', 'hexacolor', 'heptacolor', 'octacolor', 'enneacolor', 'decacolor', 'hyperpolycolor'];
+  static final List<String?> COLOR_QUALIFIERS = [null, null, 'bicolor', 'tricolor', 'tetracolor', 'quintacolor', 'hexacolor', 'heptacolor', 'octacolor', 'enneacolor', 'decacolor', 'hyperpolycolor'];
 
   final String word;
   final List<String> usernames;
 
   ProvisionalWord(this.word, this.usernames);
 
-  int score() {
+  ProvisionalScoreDisplayLine score() {
     int baseScore = word.split('').map((char) => Words.letterValues[char] ?? 0).reduce((sum, value) => sum + value);
     if (word.length > 5) {
       baseScore += pow(word.length - 4, 2).floor();
     }
-    return baseScore * usernames.length;
+    final valid = Words.isLegal(word);
+    final multiplier = usernames.length;
+    final score = baseScore * multiplier;
+    final qualifierText = multiplier >= 2 ? '(${COLOR_QUALIFIERS[min(multiplier, COLOR_QUALIFIERS.length - 1)]})' : '';
+    final scoreText = valid ? (multiplier > 1 ? '$baseScore×$multiplier' : baseScore.toString()) : '×';
+    return ProvisionalScoreDisplayLine(valid, score, word, qualifierText, scoreText);
   }
 
   String? getNotificationQualifier() {
@@ -128,4 +141,18 @@ class ProvisionalWord {
     if (colorQualifier != null) return colorQualifier;
     return null;
   }
+}
+
+class ProvisionalScore {
+  final int total;
+  List<ProvisionalScoreDisplayLine> displayLines;
+
+  ProvisionalScore(this.total, this.displayLines);
+}
+class ProvisionalScoreDisplayLine {
+  final bool valid;
+  final int score;
+  final String wordText, qualifierText, scoreText;
+
+  ProvisionalScoreDisplayLine(this.valid, this.score, this.wordText, this.qualifierText, this.scoreText);
 }

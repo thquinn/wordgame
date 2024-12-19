@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/flame/player_panels.dart';
+import 'package:wordgame/flame/provisional_panel.dart';
 import 'package:wordgame/flame/rack.dart';
 import 'package:wordgame/flame/parallax_painter.dart';
 import 'package:wordgame/flame/status_panels.dart';
@@ -24,6 +25,7 @@ class WordCamera extends CameraComponent with HasGameRef<WordGame>, KeyboardHand
   WordCamera() : super() {
     backdrop.add(ParallaxGrid());
     viewport.add(RackAnchor());
+    viewport.add(ProvisionalPanelAnchor());
     viewport.add(StatusAnchor());
     viewport.add(TeamAnchor());
     viewport.add(NotificationManager());
