@@ -68,10 +68,10 @@ class ProvisionalPanel extends PositionComponent with HasGameRef<WordGame>, HasV
 
   @override
   FutureOr<void> onLoad() async {
-    position += Vector2(0, -125);
     box = ScaledNineTileBoxComponent(.275);
     final sprite = await Sprite.load('panel.png');
     box.nineTileBox = AlphaNineTileBox(sprite, opacity: 0.8, leftWidth: 120, bottomHeight: 120, rightWidth: 120, topHeight: 120);
+    box.position = Vector2(0, -125);
     box.anchor = Anchor.bottomCenter;
     add(box);
   }
@@ -125,11 +125,11 @@ class ProvisionalPanel extends PositionComponent with HasGameRef<WordGame>, HasV
     final totalWidth = leftMaxWidth + rightMaxWidth + COLUMN_SPACING;
     box.setSize(Vector2(totalWidth + 2 * PADDING_HORIZONTAL, height + PADDING_TOP + PADDING_BOTTOM));
     for (final leftText in leftTexts) {
-      leftText.position += Vector2(totalWidth / -2, -PADDING_BOTTOM);
+      leftText.position += Vector2(totalWidth / -2, box.position.y - PADDING_BOTTOM);
       add(leftText);
     }
     for (final rightText in rightTexts) {
-      rightText.position += Vector2(totalWidth / 2 - rightMaxWidth / 2, -PADDING_BOTTOM);
+      rightText.position += Vector2(totalWidth / 2 - rightMaxWidth / 2, box.position.y - PADDING_BOTTOM);
       add(rightText);
     }
   }

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
@@ -21,7 +20,6 @@ class Words {
     final file = await rootBundle.loadString('assets/words.txt');
     LineSplitter ls = LineSplitter();
     wordSet = ls.convert(file).toSet();
-    print('Initialized word list with ${wordSet.length} words.');
     // Calculate letter distribution.
     final counts = List.filled(26, 0);
     final codeUnitA = 'a'.codeUnitAt(0);
@@ -33,7 +31,6 @@ class Words {
       }
     }
     letterDistribution = counts.map((c) => max(c / total, 0.005)).toList(); // all letters should be at least 0.5% of the distribution
-    debugPrint('Calculated letter distribution: ${jsonEncode(letterDistribution)}');
   }
 
   static bool isLegal(String word) {

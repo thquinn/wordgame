@@ -162,9 +162,6 @@ class LocalState {
     }
   }
   refillBag() {
-    print('static letter dist is');
-    print(Words.letterDistribution);
-    print(Words.wordSet.length);
     for (int i = 0; i < bagDistribution.length; i++) {
       bagDistribution[i] += Words.letterDistribution[i];
     }
