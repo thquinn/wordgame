@@ -42,6 +42,21 @@ class Words {
     final game = wordGameState.game!;
     final localState = wordGameState.localState!;
     final provisionalTiles = Map<Point<int>, String>.from(localState.provisionalTiles);
+    final placedTiles = game.state.placedTiles;
+    // Check for errors.
+    ProvisionalResultError error = ProvisionalResultError.none;
+    if (provisionalTiles.isEmpty) {
+      error = ProvisionalResultError.none;
+    } else if (provisionalTiles.keys.map((e) => e.x).toSet().length > 1 && provisionalTiles.keys.map((e) => e.y).toSet().length > 1) {
+      error = ProvisionalResultError.nonlinear;
+    } else if (!Util.allCoorsWithinBounds(provisionalTiles.keys).every((e) => provisionalTiles.containsKey(e) || placedTiles.containsKey(e))) {
+      error = ProvisionalResultError.gap;
+    } else if (placedTiles.isNotEmpty && !provisionalTiles.keys.any((Point<int> coor) => placedTiles.containsKey(Point<int>(coor.x - 1, coor.y)) ||
+                                                                                         placedTiles.containsKey(Point<int>(coor.x + 1, coor.y)) ||
+                                                                                         placedTiles.containsKey(Point<int>(coor.x, coor.y - 1)) ||
+                                                                                         placedTiles.containsKey(Point<int>(coor.x, coor.y + 1)))) {
+        error = ProvisionalResultError.disconnected;
+    }
     // Check horizontal and vertical words.
     for (final direction in [Point(1, 0), Point(0, 1)]) {
       final toCheck = provisionalTiles.keys.toList();
@@ -50,15 +65,15 @@ class Words {
         final Set<String> usernames = { localState.username };
         // Find the leftmost tile of the word.
         Point<int> point = toCheck.first;
-        while (game.state.placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
+        while (placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
           point -= direction;
         }
         point += direction;
         // Put the letters and usernames together.
-        while (game.state.placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
-          word += game.state.placedTiles[point]?.letter ?? provisionalTiles[point]!;
-          if (game.state.placedTiles.containsKey(point)) {
-            usernames.add(game.state.placedTiles[point]!.username);
+        while (placedTiles.containsKey(point) || provisionalTiles.containsKey(point)) {
+          word += placedTiles[point]?.letter ?? provisionalTiles[point]!;
+          if (placedTiles.containsKey(point)) {
+            usernames.add(placedTiles[point]!.username);
           }
           toCheck.remove(point);
           point += direction;
@@ -73,20 +88,24 @@ class Words {
     final coorsAfter = game.state.placedTiles.keys.followedBy(localState.provisionalTiles.keys).toSet();
     final enclosedAreas = Util.findNewEnclosedEmptyAreas(coorsBefore, coorsAfter);
     final largestNewRect = Util.findLargestNewRectangle(coorsBefore, coorsAfter);
-    return ProvisionalResult(provisionalTiles, provisionalWords, pickups, enclosedAreas, largestNewRect);
+    return ProvisionalResult(error, provisionalTiles, provisionalWords, pickups, enclosedAreas, largestNewRect);
   }
 }
 
 class ProvisionalResult {
+  final ProvisionalResultError error;
   final Map<Point<int>, String> provisionalTiles;
   final List<ProvisionalWord> words;
   final List<PickupType> pickups;
   final List<Set<Point<int>>> enclosedAreas;
   final RectInt? largestNewRect;
 
-  ProvisionalResult(this.provisionalTiles, this.words, this.pickups, this.enclosedAreas, this.largestNewRect);
+  ProvisionalResult(this.error, this.provisionalTiles, this.words, this.pickups, this.enclosedAreas, this.largestNewRect);
 
   ProvisionalScore score() {
+    if (error != ProvisionalResultError.none) {
+      return ProvisionalScore.error(error);
+    }
     int total = 0;
     final List<ProvisionalScoreDisplayLine> displayLines = [];
     final sortedWords = List<ProvisionalWord>.from(words)..sort((a, b) => a.word.length != b.word.length ? b.word.length.compareTo(a.word.length) : a.word.compareTo(b.word));
@@ -132,7 +151,7 @@ class ProvisionalWord {
 
   String? getNotificationQualifier() {
     String? lengthQualifier = word.length >= 8 ? '${word.length}-letter' : null;
-    String? colorQualifier = COLOR_QUALIFIERS[min(usernames.length, COLOR_QUALIFIERS.length - 1)];
+    String? colorQualifier = usernames.length >= 3 ? COLOR_QUALIFIERS[min(usernames.length, COLOR_QUALIFIERS.length - 1)] : null;
     if (lengthQualifier != null && colorQualifier != null) return '$lengthQualifier $colorQualifier';
     if (lengthQualifier != null) return lengthQualifier;
     if (colorQualifier != null) return colorQualifier;
@@ -143,8 +162,10 @@ class ProvisionalWord {
 class ProvisionalScore {
   final int total;
   List<ProvisionalScoreDisplayLine> displayLines;
+  ProvisionalResultError error;
 
-  ProvisionalScore(this.total, this.displayLines);
+  ProvisionalScore(this.total, this.displayLines) : error = ProvisionalResultError.none;
+  ProvisionalScore.error(this.error) : total = 0, displayLines = [];
 }
 class ProvisionalScoreDisplayLine {
   final bool valid;
@@ -152,4 +173,21 @@ class ProvisionalScoreDisplayLine {
   final String wordText, qualifierText, scoreText;
 
   ProvisionalScoreDisplayLine(this.valid, this.score, this.wordText, this.qualifierText, this.scoreText);
+}
+
+enum ProvisionalResultError {
+  none, disconnected, gap, nonlinear;
+
+  @override String toString() {
+    switch (this) {
+      case ProvisionalResultError.none:
+        return 'No provisional error.';
+      case ProvisionalResultError.disconnected:
+        return 'Tiles must be played next to existing tiles.';
+      case ProvisionalResultError.gap:
+        return 'Tiles must be played with no empty spaces in between.';
+      case ProvisionalResultError.nonlinear:
+        return 'Tiles must be played in a line.';
+    }
+  }
 }

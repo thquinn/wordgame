@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:wordgame/state.dart';
 
@@ -19,12 +20,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
     if (roomID != null) {
       roomController.value = TextEditingValue(text: roomID);
     }
+    SharedPreferences.getInstance().then((prefs) => usernameController.value = TextEditingValue(text: prefs.getString('username') ?? ''));
 
-    join() async => {
+    join() async {
       if (roomController.text.isNotEmpty && usernameController.text.isNotEmpty) {
-        await appState.connect(roomController.text, usernameController.text)
+        SharedPreferences.getInstance().then((prefs) => prefs.setString('username', usernameController.text));
+        await appState.connect(roomController.text, usernameController.text);
       }
-    };
+    }
 
     return Scaffold(
       body: Column(

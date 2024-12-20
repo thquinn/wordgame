@@ -192,6 +192,19 @@ class Util {
     }
     return areas;
   }
+
+  static Iterable<Point<int>> allCoorsWithinBounds(Iterable<Point<int>> coors) sync* {
+    if (coors.isEmpty) return;
+    final minX = coors.map((e) => e.x).reduce(min);
+    final maxX = coors.map((e) => e.x).reduce(max);
+    final minY = coors.map((e) => e.y).reduce(min);
+    final maxY = coors.map((e) => e.y).reduce(max);
+    for (int x = minX; x <= maxX; x++) {
+      for (int y = minY; y <= maxY; y++) {
+        yield Point<int>(x, y);
+      }
+    }
+  }
 }
 
 class RectInt {

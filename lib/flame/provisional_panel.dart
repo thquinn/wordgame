@@ -79,9 +79,16 @@ class ProvisionalPanel extends PositionComponent with HasGameRef<WordGame>, HasV
   void set() {
     removeWhere((e) => e is TextComponent || e is RectangleComponent);
     final result = Words.getProvisionalResult(appState).score();
-    isVisible = result.displayLines.isNotEmpty;
-    if (result.displayLines.isEmpty) return;
-    double height = LINE_HEIGHT * result.displayLines.length;
+    isVisible = result.displayLines.isNotEmpty || result.error != ProvisionalResultError.none;
+    if (!isVisible) return;
+    double height = LINE_HEIGHT * (result.error != ProvisionalResultError.none ? 1 : result.displayLines.length);
+    if (result.error != ProvisionalResultError.none) {
+      final errorString = result.error.toString();
+      final width = styleQualifier.getLineMetrics(errorString).width;
+      add(TextComponent(textRenderer: styleQualifier, text: errorString, position: Vector2(-width / 2, -LINE_HEIGHT + box.position.y - PADDING_BOTTOM)));
+      box.setSize(Vector2(width + 2 * PADDING_HORIZONTAL, height + PADDING_TOP + PADDING_BOTTOM));
+      return;
+    }
     final showTotal = result.displayLines.every((e) => e.valid) && (result.displayLines.length > 1 || int.tryParse(result.displayLines.first.scoreText) == null);
     if (showTotal) height += LINE_HEIGHT + 15;
     // Left column.

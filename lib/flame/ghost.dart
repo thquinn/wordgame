@@ -35,7 +35,7 @@ class GhostManager extends PositionComponent with HasGameRef<WordGame> {
         if (username == appState.localState!.username) continue;
         if (!ghosts.containsKey(username)) {
           print('Creating ghost for user $username');
-          Ghost ghost = Ghost(username);
+          Ghost ghost = Ghost(appState, username);
           ghosts[username] = ghost;
           add(ghost);
         }
@@ -54,12 +54,12 @@ class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
     ),
   );
 
-  late WordGameState appState;
+  final WordGameState appState;
+  final String username;
   late ScaledNineTileBoxComponent boxComponent;
   late TextBoxComponent textComponent;
-  String username;
   
-  Ghost(this.username) : super();
+  Ghost(this.appState, this.username) : super();
   
   @override
   Future<void> onLoad() async {
@@ -82,14 +82,9 @@ class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
       boxConfig: TextBoxConfig(maxWidth: 10000),
     );
     add(textComponent);
+    textComponent.update(0); // it occasionally fails to align, this seems to fix it...?
     final arrowSprite = await Sprite.load('ghost_arrow.png');
     add(SpriteComponent(sprite: arrowSprite, position: Vector2(0, .275), size: Vector2(1, 1), anchor: Anchor.bottomCenter)..opacity=0.1);
-  }
-
-  @override
-  void onMount() {
-    super.onMount();
-    appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
   }
 
   @override

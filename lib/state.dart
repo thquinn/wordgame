@@ -198,23 +198,10 @@ class WordGameState extends ChangeNotifier {
     if (!gameIsActive()) return;
     final provisionalTiles = localState!.provisionalTiles;
     if (provisionalTiles.isEmpty) return;
-    // Can only play tiles in a straight line.
-    if (!provisionalTiles.keys.every((coor) => coor.x == provisionalTiles.keys.first.x) && !provisionalTiles.keys.every((coor) => coor.y == provisionalTiles.keys.first.y)) {
-      return;
-    }
-    // If there are tiles on the board, you have to play adjacent to one.
-    final placedTiles = game!.state.placedTiles;
-    if (placedTiles.isNotEmpty && !provisionalTiles.keys.any((Point<int> coor) {
-      return placedTiles.containsKey(Point<int>(coor.x - 1, coor.y)) ||
-        placedTiles.containsKey(Point<int>(coor.x + 1, coor.y)) ||
-        placedTiles.containsKey(Point<int>(coor.x, coor.y - 1)) ||
-        placedTiles.containsKey(Point<int>(coor.x, coor.y + 1));
-    })) {
-      return;
-    }
-    // Check for word legality.
+    // Check for errors and word legality.
     final provisionalResult = Words.getProvisionalResult(this);
-    if (provisionalResult.words.any((w) => !Words.isLegal(w.word))) {
+    if (provisionalResult.error != ProvisionalResultError.none ||
+        provisionalResult.words.any((w) => !Words.isLegal(w.word))) {
       return;
     }
     // Play.
@@ -267,6 +254,7 @@ class WordGameState extends ChangeNotifier {
     if (!hasGame()) return;
     if (localState!.provisionalTiles.isEmpty) return;
     localState!.provisionalTiles.clear();
+    notifyListeners();
     await channel!.track(localState!.toPresenceJson());
   }
 }
