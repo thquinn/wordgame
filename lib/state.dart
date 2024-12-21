@@ -24,7 +24,7 @@ class WordGameState extends ChangeNotifier {
     return isConnected() && game != null;
   }
   bool gameIsActive() {
-    return hasGame() && game!.active && game!.endsAt.isAfter(DateTime.now());
+    return hasGame() && game!.active && game!.startsAt.isBefore(DateTime.now()) && game!.endsAt.isAfter(DateTime.now());
   }
   bool isAdmin() {
     if (channel!.presenceState().isEmpty) return false;

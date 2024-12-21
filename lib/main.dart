@@ -28,7 +28,11 @@ class MyApp extends StatelessWidget {
         title: 'Wordgame',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+          colorScheme: ColorScheme.fromSeed(seedColor: Color.fromRGBO(95, 95, 177, 1)),
+          fontFamily: 'Solway',
+          cardTheme: CardTheme(elevation: 2),
+          inputDecorationTheme: InputDecorationTheme(contentPadding: EdgeInsets.all(10), isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)))),
+          scrollbarTheme: ScrollbarThemeData(thickness: WidgetStatePropertyAll(0)),
         ),
         home: MyHomePage(),
       ),

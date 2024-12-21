@@ -9,10 +9,10 @@ class Game {
   final String channel;
   final GameState state;
   final bool active;
-  final DateTime endsAt;
+  final DateTime startsAt, endsAt;
   final int version;
 
-  Game(this.id, this.channel, this.state, this.active, this.endsAt, this.version);
+  Game(this.id, this.channel, this.state, this.active, this.startsAt, this.endsAt, this.version);
   static Game? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
     return Game(
@@ -20,6 +20,7 @@ class Game {
       json['channel'] as String,
       GameState(json['state']),
       json['active'] as bool,
+      DateTime.parse(json['starts_at']),
       DateTime.parse(json['ends_at']),
       json['version'] as int,
     );

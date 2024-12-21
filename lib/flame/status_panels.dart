@@ -9,6 +9,7 @@ import 'package:flame/text.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/extensions.dart';
 import 'package:wordgame/flame/game.dart';
+import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
 class StatusAnchor extends AlignComponent {
@@ -31,8 +32,9 @@ class StatusPanels extends PositionComponent with HasGameRef<WordGame> {
       1,
       'Time',
       () {
-        final duration = appState.game?.endsAt.difference(DateTime.now());
-        if (duration == null) return '';
+        final Game? game = appState.game;
+        if (game == null) return '';
+        final duration = game.endsAt.difference(game.startsAt.isBefore(DateTime.now()) ? DateTime.now() : game.startsAt);
         if (duration.isNegative) return '0:00';
         final milliseconds = duration.inMilliseconds;
         final minutes = milliseconds ~/ (60 * 1000);

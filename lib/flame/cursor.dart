@@ -125,7 +125,7 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     // DEBUG: Spawn area glow.
     if (keyDown && event.logicalKey == LogicalKeyboardKey.f7) {
       Game newGame = appState.game!;
-      Game fakeOldGame = Game(newGame.id, '', GameState.empty(), false, DateTime.now(), 0);
+      Game fakeOldGame = Game(newGame.id, '', GameState.empty(), false, DateTime.now(), DateTime.now(), 0);
       TileManager.instance.gameDelta(fakeOldGame, newGame);
       AreaGlowManager.instance.gameDelta(fakeOldGame, newGame);
       return false;
