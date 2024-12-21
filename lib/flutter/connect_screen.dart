@@ -79,14 +79,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 width: 400,
                 child: Stack(
                   children: [
-                    Image.asset('images/logo_shadow.png', alignment: Alignment.bottomCenter, opacity: AlwaysStoppedAnimation(0.5)),
+                    Image.asset('assets/images/logo_shadow.png', alignment: Alignment.bottomCenter, opacity: AlwaysStoppedAnimation(0.5)),
                     BackdropFilter(
                       filter: ImageFilter.blur(
                         sigmaX: 5.0,
                         sigmaY: 5.0,
                       ),
                       child: Image.asset(
-                        'images/logo.png',
+                        'assets/images/logo.png',
                       ),
                     )
                   ],
@@ -180,7 +180,7 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 class TipVideoAndCaption {
   final String path, caption;
 
-  TipVideoAndCaption(String name, this.caption) : path = 'tips/$name.mp4';
+  TipVideoAndCaption(String name, this.caption) : path = 'assets/tips/$name.mp4';
 
   static final List<TipVideoAndCaption> TIPS = [
     TipVideoAndCaption('tip1', 'Type to place tiles.\nPress Enter to play them.'),

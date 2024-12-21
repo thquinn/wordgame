@@ -93,7 +93,7 @@ class ProvisionalPanel extends PositionComponent with HasGameRef<WordGame>, HasV
     if (showTotal) height += LINE_HEIGHT + 15;
     // Left column.
     final List<TextComponent> leftTexts = [];
-    double leftMaxWidth = 0;
+    double leftMaxWidth = 200;
     for (final (i, line) in result.displayLines.indexed) {
       final y = -height + LINE_HEIGHT * i;
       final wordText = line.wordText.isNotEmpty ? TextComponent(textRenderer: styleWord, text: line.wordText, position: Vector2(0, y)) : null;

@@ -14,7 +14,6 @@ class GhostManager extends PositionComponent with HasGameRef<WordGame> {
 
     @override
     void onMount() {
-      super.onMount();
       appState = Provider.of<WordGameState>(game.buildContext!, listen: false);
     }
 
