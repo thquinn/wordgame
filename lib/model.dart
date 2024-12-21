@@ -69,13 +69,15 @@ class GameState {
     }
     // Spawn pickups.
     List<Point<int>> tileCoors = placedTiles.keys.followedBy(provisionalResult.provisionalTiles.keys).toList();
-    final desiredPickupCount = (tileCoors.length / 20.0).floor();
-    final pickupsToSpawn = desiredPickupCount - pickupList.length ~/ 3;
+    final targetPickupCount = (tileCoors.length / 15.0).floor();
+    // Don't count pickups on the board that players are unlikely to ever be able to get.
+    final gettablePickupCount = pickups.keys.where((e) => _countAdjacentEmptySpaces(e) > 2).length;
+    final pickupsToSpawn = targetPickupCount - gettablePickupCount;
     if (pickupsToSpawn > 0) {
       Set<Point<int>> coorsToAvoid = tileCoors.followedBy(pickups.keys).toSet();
       for (int i = 0; i < pickupsToSpawn; i++) {
         // Find a coordinate at least 5 spaces from everything on the board.
-        while (true) {
+        for (int j = 0; j < 100; j++) { // Try a bunch of times to find a spot.
           Point<int> spawnCandidate = tileCoors[Util.random.nextInt(tileCoors.length)];
           final distance = 6 + Util.random.nextInt(2);
           final xySplit = Util.random.nextInt(distance + 1);
@@ -93,6 +95,9 @@ class GameState {
       'placed_tiles': letterList,
       'pickups': pickupList,
     };
+  }
+  int _countAdjacentEmptySpaces(Point<int> coor) {
+    return Util.cardinalDirections.map((e) => coor + e).where((e) => !placedTiles.containsKey(e)).length;
   }
 }
 class PlacedTile {

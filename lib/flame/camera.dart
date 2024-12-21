@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordgame/flame/control_panel.dart';
+import 'package:wordgame/flame/countdown.dart';
 import 'package:wordgame/flame/game.dart';
 import 'package:wordgame/flame/notification.dart';
 import 'package:wordgame/flame/player_panels.dart';
@@ -28,6 +29,7 @@ class WordCamera extends CameraComponent with HasGameRef<WordGame>, KeyboardHand
     viewport.add(RackAnchor());
     viewport.add(ProvisionalPanelAnchor());
     viewport.add(StatusAnchor());
+    viewport.add(CountdownAnchor());
     viewport.add(TeamAnchor());
     viewport.add(ControlAnchor());
     viewport.add(NotificationManager());

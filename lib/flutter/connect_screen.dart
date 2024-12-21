@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,6 +76,23 @@ class _ConnectScreenState extends State<ConnectScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
+                width: 400,
+                child: Stack(
+                  children: [
+                    Image.asset('images/logo_shadow.png', alignment: Alignment.bottomCenter, opacity: AlwaysStoppedAnimation(0.5)),
+                    BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 5.0,
+                        sigmaY: 5.0,
+                      ),
+                      child: Image.asset(
+                        'images/logo.png',
+                      ),
+                    )
+                  ],
+                )),
+              SizedBox(height: 48),
+              SizedBox(
                 width: 600,
                 child: Card(
                   child: Padding(
@@ -89,7 +108,33 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor), onPressed: join, child: Text('Join', style: theme.textTheme.labelLarge!.copyWith(color: Colors.white, fontFamily: 'Katahdin Round'))),
                       ]
               )))),
-              SizedBox(height: 32),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Center(child: IconButton.filled(padding: EdgeInsets.all(0), iconSize: 32, onPressed: () => scrollTip(-1), icon: const Icon(Icons.arrow_left_rounded)))
+                  ),
+                  Card(
+                    color: scaffoldColor,
+                    clipBehavior: Clip.antiAlias,
+                    child: SizedBox(
+                      width: 600,
+                      height: 450,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        physics: NeverScrollableScrollPhysics(),
+                        controller: scrollTipVideoController,
+                        children: tipPlayers
+                  ))),
+                  SizedBox(
+                    width: 80,
+                    child: Center(child: IconButton.filled(padding: EdgeInsets.all(0), iconSize: 32, onPressed: () => scrollTip(1), icon: const Icon(Icons.arrow_right_rounded)))
+                  ),
+                ]
+              ),
+              dotsIndicator,
               SizedBox(
                 width: 600,
                 height: 100,
@@ -116,32 +161,6 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                           child: Center(child: Text(e.caption, textAlign: TextAlign.center)))))))).toList()
                 ))),
-              dotsIndicator,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    child: Center(child: IconButton.filled(padding: EdgeInsets.all(0), iconSize: 32, onPressed: () => scrollTip(-1), icon: const Icon(Icons.arrow_left_rounded)))
-                  ),
-                  Card(
-                    color: scaffoldColor,
-                    clipBehavior: Clip.antiAlias,
-                    child: SizedBox(
-                      width: 600,
-                      height: 450,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        physics: NeverScrollableScrollPhysics(),
-                        controller: scrollTipVideoController,
-                        children: tipPlayers
-                  ))),
-                  SizedBox(
-                    width: 80,
-                    child: Center(child: IconButton.filled(padding: EdgeInsets.all(0), iconSize: 32, onPressed: () => scrollTip(1), icon: const Icon(Icons.arrow_right_rounded)))
-                  ),
-                ]
-              ),
             ],
           ))));
   }
