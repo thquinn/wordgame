@@ -188,6 +188,8 @@ class TipVideoAndCaption {
     TipVideoAndCaption('tip1', 'Type to place tiles.\nPress Enter to play them.'),
     TipVideoAndCaption('tip2', 'Arrow keys move your cursor, Tab switches direction. Play next to your teammates!'),
     TipVideoAndCaption('tip3', 'The more colorful a word is,\nthe more it\'s worth!'),
+    TipVideoAndCaption('tip7', 'Use Shift + arrow keys to pan,\nand -/+ (no Shift) to zoom.'),
+    TipVideoAndCaption('tip8', 'Backspace to erase tiles,\nor Esc to erase them all.'),
     TipVideoAndCaption('tip4', 'Form loops to surround\ntiles and earn points!'),
     TipVideoAndCaption('tip5', 'Form rectangular chunks\nto earn even more points!'),
     TipVideoAndCaption('tip6', 'Pick up wildcard tiles\nand use them as any letter!'),

@@ -61,6 +61,9 @@ class TeamPanels extends PositionComponent with HasGameRef<WordGame> {
     final adminUsername = appState.getAdminUsername();
     final List<String> usernames = presences.map((e) => e.payload['username']).where((e) => e != null).cast<String>().toList();
     usernames.sort();
+    if (appState.isAdmin() && !appState.gameIsActive()) {
+      usernames.add('press Space to start!');
+    }
     final lines = [];
     for (final username in usernames.reversed) {
       lines.insert(0, username);

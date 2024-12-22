@@ -47,6 +47,21 @@ class WordCamera extends CameraComponent with HasGameRef<WordGame>, KeyboardHand
     inputZoom = keysPressed.contains(LogicalKeyboardKey.minus) ? -1 : keysPressed.contains(LogicalKeyboardKey.equal) ? 1 : 0;
     return true;
   }
+  void drag(Vector2 localDelta) {
+    viewfinder.position -= localDelta;
+    followCursor = false;
+  }
+  void scroll(Vector2 position, double amount) {
+    final previousZoom = zoom;
+    zoom /= pow(1.002, -amount);
+    zoom = zoom.clamp(8, 40);
+    final zoomFactor = zoom / previousZoom;
+    followCursor = false;
+    // Move camera towards scroll point.
+    final worldPosition = viewfinder.globalToLocal(position);
+    final positionDelta = worldPosition - viewfinder.position;
+    viewfinder.position -= positionDelta * (zoomFactor - 1);
+  }
 
   @override
   void update(double dt) {

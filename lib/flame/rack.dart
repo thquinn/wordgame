@@ -227,6 +227,7 @@ class RackCooldownCircle extends ClipComponent {
 
   @override
   Future<void> onLoad() async {
+    await super.onLoad();
     final spriteCircle = await Sprite.load('circle.png');
     add(SpriteComponent(
       sprite: spriteCircle,
@@ -249,6 +250,11 @@ class RackCooldownCircle extends ClipComponent {
     final radians = percent * 2 * pi;
     points.add(Vector2(sin(radians), -cos(radians)) * size.x * 2);
     canvas.clipPath(Polygon(points).asPath());
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    return false;
   }
 }
 

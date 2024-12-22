@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wordgame/flame/area_glow.dart';
@@ -11,7 +12,7 @@ import 'package:wordgame/flame/tile.dart';
 import 'package:wordgame/model.dart';
 import 'package:wordgame/state.dart';
 
-class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, HasVisibility {
+class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler, TapCallbacks, DragCallbacks, HasVisibility {
   late WordGameState appState;
   late SpriteComponent arrow;
   late Sprite spriteCursor, spriteCursorOutside;
@@ -53,6 +54,23 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
     if (appState.game?.endsAt.isBefore(DateTime.now()) == true) {
       appState.clearProvisionalTiles();
     }
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    return true;
+  }
+  @override
+  void onTapUp(TapUpEvent event) {
+    final absolutePosition = absolutePositionOf(event.localPosition);
+    final x = absolutePosition.x.round();
+    final y = absolutePosition.y.round();
+    appState.moveCursorTo(Point(x, y));
+  }
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    // I'd rather have this in the camera/viewfinder, but I'm not getting drag events on non-world components.
+    game.wordCamera.drag(event.localDelta);
   }
 
   @override

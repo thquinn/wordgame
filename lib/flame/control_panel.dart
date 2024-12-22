@@ -31,7 +31,7 @@ class ControlPanel extends PositionComponent with HasVisibility, KeyboardHandler
   @override
   FutureOr<void> onLoad() async {
     prefs = await SharedPreferences.getInstance();
-    isVisible = prefs.getBool('show_tutorial') ?? true;
+    isVisible = prefs.getBool('show_tutorial') ?? false;
 
     const text = '''
 start game (as leader): space

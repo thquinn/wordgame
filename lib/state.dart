@@ -23,8 +23,12 @@ class WordGameState extends ChangeNotifier {
   bool hasGame() {
     return isConnected() && game != null;
   }
-  bool gameIsActive() {
-    return hasGame() && game!.active && game!.startsAt.isBefore(DateTime.now()) && game!.endsAt.isAfter(DateTime.now());
+  bool gameIsActive({bool andStarted = true}) {
+    if (!hasGame()) return false;
+    if (!game!.active) return false;
+    final isAfterStart = game!.startsAt.isBefore(DateTime.now());
+    final isBeforeEnd = game!.endsAt.isAfter(DateTime.now());
+    return andStarted ? (isAfterStart && isBeforeEnd) : isBeforeEnd;
   }
   bool isAdmin() {
     if (channel!.presenceState().isEmpty) return false;
@@ -122,7 +126,7 @@ class WordGameState extends ChangeNotifier {
   // Commands.
   startGame() async {
     if (!isConnected()) return;
-    if (gameIsActive()) return;
+    if (gameIsActive(andStarted: false)) return;
     if (!isAdmin()) return;
     // Finish existing game.
     if (game != null) {
@@ -149,6 +153,7 @@ class WordGameState extends ChangeNotifier {
 
   moveCursorTo(Point<int> coor) async {
     if (!hasGame()) return;
+    if (localState!.cursor == coor) return;
     localState!.cursor = coor;
     await channel!.track(localState!.toPresenceJson());
   }
