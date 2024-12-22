@@ -6,6 +6,7 @@ import 'package:wordgame/flame/cursor.dart';
 import 'package:wordgame/flame/ghost.dart';
 import 'package:wordgame/flame/pickup.dart';
 import 'package:wordgame/flame/tile.dart';
+import 'package:wordgame/flame/tile_ghost.dart';
 
 class WordWorld extends World {
   late Cursor cursor;
@@ -16,6 +17,7 @@ class WordWorld extends World {
     await add(TileManager());
     await add(PickupManager());
     await add(GhostManager());
+    await add(TileGhostManager());
     await add(AreaGlowManager());
   }
 }

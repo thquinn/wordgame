@@ -2,8 +2,8 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wordgame/connect_screen.dart';
 import 'package:wordgame/flame/game.dart';
-import 'package:wordgame/flutter/connect_screen.dart';
 import 'package:wordgame/state.dart';
 import 'package:wordgame/words.dart';
 

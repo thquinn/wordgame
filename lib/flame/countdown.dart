@@ -116,7 +116,7 @@ class CountdownNumber extends TextComponent {
   CountdownNumber(int number) : super(position: Vector2(0, 250), anchor: Anchor.center) {
     text = number.toString();
     decorator.addLast(Shadow3DDecorator(
-      opacity: 0.5,
+      opacity: 0.25,
       angle: 0,
       blur: 4,
       ascent: -2,

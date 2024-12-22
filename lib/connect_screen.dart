@@ -69,12 +69,13 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
     return Scaffold(
       backgroundColor: scaffoldColor,
-      body: Center(
+      body: Center(child: SingleChildScrollView(
         child: SizedBox(
-          width: 800,
+          width: double.infinity,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              SizedBox(height: 32),
               SizedBox(
                 width: 400,
                 child: Stack(
@@ -100,7 +101,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     child: Column(
                       children: [
                         Text('Room ID:', style: theme.textTheme.titleMedium),
-                        TextField(controller: roomController, maxLength: 16, buildCounter: buildCounter, textAlign: TextAlign.center, inputFormatters: [UpperCaseTextFormatter()], autofocus: roomID == null),
+                        TextField(controller: roomController, maxLength: 16, buildCounter: buildCounter, textAlign: TextAlign.center, inputFormatters: [UpperCaseTextFormatter()], onSubmitted: (String _) async {await join();}, autofocus: roomID == null),
                         SizedBox(height: 16),
                         Text('Username:', style: theme.textTheme.titleMedium),
                         TextField(controller: usernameController, maxLength: 16, buildCounter: buildCounter, textAlign: TextAlign.center, onSubmitted: (String _) async {await join();}, autofocus: roomID != null),
@@ -161,8 +162,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                           child: Center(child: Text(e.caption, textAlign: TextAlign.center)))))))).toList()
                 ))),
+              SizedBox(height: 32),
             ],
-          ))));
+          )))));
   }
 }
 
@@ -188,5 +190,6 @@ class TipVideoAndCaption {
     TipVideoAndCaption('tip3', 'The more colorful a word is,\nthe more it\'s worth!'),
     TipVideoAndCaption('tip4', 'Form loops to surround\ntiles and earn points!'),
     TipVideoAndCaption('tip5', 'Form rectangular chunks\nto earn even more points!'),
+    TipVideoAndCaption('tip6', 'Pick up wildcard tiles\nand use them as any letter!'),
   ];
 }

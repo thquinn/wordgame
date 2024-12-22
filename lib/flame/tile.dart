@@ -129,6 +129,7 @@ class TileWrapper extends ClipComponent with HasGameRef<WordGame>, HasVisibility
 }
 
 class Tile extends SpriteComponent with HasGameRef<WordGame> {
+  static const double placementAnimationSpeed = 2;
   static final List<ColorFilter> teammateFilters = [
     ColorMatrixHSVC.make(hue: 0.45, brightness: -0.2), // blue
     ColorMatrixHSVC.make(hue: 0.15, saturation: 1.2), // green
@@ -143,7 +144,12 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
     ColorMatrixHSVC.make(hue: -0.125, saturation: 3, brightness: -0.1), // peach
   ];
   static final Map<String, int> teammateFilterIndices = {};
-  static const double placementAnimationSpeed = 2;
+  static ColorFilter getColorFilterForUsername(String username) {
+    if (!teammateFilterIndices.containsKey(username)) {
+      teammateFilterIndices[username] = teammateFilterIndices.length % teammateFilters.length;
+    }
+    return teammateFilters[teammateFilterIndices[username]!];
+  }
 
   TileState tileState = TileState.unknown;
   final WordGameState appState;
@@ -218,10 +224,7 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
       if (tileState == TileState.played) {
         PlacedTile placed = appState.game!.state.placedTiles[coor]!;
         if (placed.username != appState.localState!.username) {
-          if (!teammateFilterIndices.containsKey(placed.username)) {
-            teammateFilterIndices[placed.username] = teammateFilterIndices.length % teammateFilters.length;
-          }
-          paint.colorFilter = teammateFilters[teammateFilterIndices[placed.username]!];
+          paint.colorFilter = getColorFilterForUsername(placed.username);
         }
       }
     }

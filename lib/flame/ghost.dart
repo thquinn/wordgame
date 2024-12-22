@@ -97,14 +97,15 @@ class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
       final usernames = presences.where((e) => Point<int>(e.payload['cursor'][0], e.payload['cursor'][1]) == cursor).map((e) => e.payload['username'] as String).toList();
       usernames.removeWhere((e) => e == appState.localState!.username);
       usernames.sort();
+      usernames.add(' '); // _HACK: text box layout messes up with just one line
       isVisible = usernames[0] == username;
       if (!isVisible) return;
       final width = max(usernames.map((u) => textComponent.getLineWidth(u, u.length)).reduce(max) + .5, 1.0);
       textComponent.lines.clear();
       textComponent.lines.addAll(usernames);
-      final height = usernames.length * textPaint.fixedHeight + .8;
+      final height = (usernames.length - 1) * textPaint.fixedHeight + .8;
       textComponent.size = Vector2(width, height);
-      textComponent.position = Vector2(0, height / 2 - .65);
+      textComponent.position = Vector2(0, height / 2 - .5);
       boxComponent.setSize(Vector2(width, height));
       position = Vector2(cursor.x.toDouble(), cursor.y + 1.2);
     } catch (e, stackTrace) {

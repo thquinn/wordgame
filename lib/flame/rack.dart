@@ -40,7 +40,7 @@ class Rack extends RectangleComponent with HasGameRef<WordGame> {
     localState = appState.localState!;
     add(RackBack(localState));
     for (int i = 0; i < localState.rackSize; i++) {
-      add(RackTile(localState, i));
+      add(RackTile(appState, i));
     }
     add(RackCooldown(appState, this));
     add(RackOverflowCounter(localState));
@@ -85,7 +85,7 @@ class RackBack extends ScaledNineTileBoxComponent {
 class RackTile extends SpriteComponent {
   static double spacing = 100;
 
-  LocalState localState;
+  WordGameState appState;
   int index;
   late Sprite spriteTile, spriteSlot;
   late TextComponent textComponent;
@@ -107,7 +107,7 @@ class RackTile extends SpriteComponent {
     ),
   );
 
-  RackTile(this.localState, this.index) : super(size: Vector2.all(spacing * 1.1));
+  RackTile(this.appState, this.index) : super(size: Vector2.all(spacing * 1.1));
 
   @override
   Future<void> onLoad() async {
@@ -129,6 +129,7 @@ class RackTile extends SpriteComponent {
 
   @override
   void update(double dt) {
+    final localState = appState.localState!;
     final tilePresent = index < localState.rack.length;
     if (tilePresent != textComponent.text.isNotEmpty) {
       if (tilePresent) {
@@ -145,14 +146,17 @@ class RackTile extends SpriteComponent {
     final letter = localState.rack[index];
     textComponent.text = letter.toUpperCase();
     // Check if provisional.
-    int numOfLetter = letter == '*' ? localState.countProvisionalWildcards() : localState.provisionalTiles.values.where((item) => item == letter).length;
-    bool isProvisional = numOfLetter > 0;
-    for (int i = index - 1; i >= 0; i--) {
-      if (localState.rack[i] == letter) {
-        numOfLetter--;
-        if (numOfLetter == 0) {
-          isProvisional = false;
-          break;
+    bool isProvisional = !appState.gameIsActive();
+    if (!isProvisional) {
+      int numOfLetter = letter == '*' ? localState.countProvisionalWildcards() : localState.provisionalTiles.values.where((item) => item == letter).length;
+      isProvisional = numOfLetter > 0;
+      for (int i = index - 1; i >= 0; i--) {
+        if (localState.rack[i] == letter) {
+          numOfLetter--;
+          if (numOfLetter == 0) {
+            isProvisional = false;
+            break;
+          }
         }
       }
     }
