@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => WordGameState(),
       child: MaterialApp(
-        title: 'Wordgame',
+        title: 'Grouptext',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Color.fromRGBO(95, 95, 177, 1)),

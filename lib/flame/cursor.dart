@@ -63,9 +63,12 @@ class Cursor extends SpriteComponent with HasGameRef<WordGame>, KeyboardHandler,
   @override
   void onTapUp(TapUpEvent event) {
     final absolutePosition = absolutePositionOf(event.localPosition);
-    final x = absolutePosition.x.round();
-    final y = absolutePosition.y.round();
-    appState.moveCursorTo(Point(x, y));
+    final coor = Point(absolutePosition.x.round(), absolutePosition.y.round());
+    if (coor == appState.localState!.cursor) {
+      appState.localState!.cursorHorizontal = !appState.localState!.cursorHorizontal;
+    } else {
+      appState.moveCursorTo(coor);
+    }
   }
   @override
   void onDragUpdate(DragUpdateEvent event) {

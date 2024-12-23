@@ -44,50 +44,47 @@ class WordGameState extends ChangeNotifier {
   connect(String roomID, String username) {
     roomID = roomID.toLowerCase();
     this.roomID = roomID;
+    print('connecting to channel $roomID');
     channel = Supabase.instance.client.channel(roomID);
     Supabase.instance.client.from('games').select().eq('channel', roomID).eq('active', true).maybeSingle().then((value) {
       game = Game.fromJson(value);
       notifyListeners();
     });
-    Supabase.instance.client.channel('game-changes').onPostgresChanges(
-      event: PostgresChangeEvent.all,
+    Supabase.instance.client.channel('game-insert').onPostgresChanges(
+      event: PostgresChangeEvent.insert,
       schema: 'public',
       table: 'games',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
-      callback: (payload) async {
-        final updatedGame = Game.fromJson(payload.newRecord);
-        if (game != null && updatedGame != null) {
-          TileManager.instance.gameDelta(game!, updatedGame);
-          AreaGlowManager.instance.gameDelta(game!, updatedGame);
+      callback: (PostgresChangePayload payload) async {
+        print('received postgres insert: ${payload.eventType}');
+        final newGame = Game.fromJson(payload.newRecord);
+        if (game != null && game!.id > newGame!.id) {
+          return; // we somehow already have a newer game.
         }
-        if (game != null && game!.id != updatedGame!.id) {
-          // A new game has started.
-          localState!.reset();
-          await channel!.track(localState!.toPresenceJson());
-        }
-        game = updatedGame;
-        if (gameIsActive()) {
-          for (final coor in game!.state.placedTiles.keys) {
-            if (localState!.provisionalTiles.containsKey(coor)) {
-              clearProvisionalTiles();
-              break;
-            }
-          }
-        } else {
-          clearProvisionalTiles();
-        }
+        // A new game has started.
+        game = newGame;
+        localState!.reset();
+        await channel!.track(localState!.toPresenceJson());
         notifyListeners();
       },
     ).subscribe();
-    Supabase.instance.client.channel('game-delete').onPostgresChanges(
-      event: PostgresChangeEvent.delete,
+    Supabase.instance.client.channel('game-update').onPostgresChanges(
+      event: PostgresChangeEvent.update,
       schema: 'public',
       table: 'games',
-      callback: (payload) {
-        if (payload.oldRecord['id'] == game?.id) {
-          game = null;
-          notifyListeners();
+      filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
+      callback: (PostgresChangePayload payload) async {
+        print('received postgres update: ${payload.eventType}');
+        final updatedGame = Game.fromJson(payload.newRecord);
+        if (game != null && updatedGame != null) {
+          if (localState!.gameDelta(game!, updatedGame)) {
+            await channel!.track(localState!.toPresenceJson());
+          }
+          TileManager.instance.gameDelta(game!, updatedGame);
+          AreaGlowManager.instance.gameDelta(game!, updatedGame);
         }
+        game = updatedGame;
+        notifyListeners();
       },
     ).subscribe();
     localState = LocalState.newLocal(username);
@@ -135,12 +132,14 @@ class WordGameState extends ChangeNotifier {
         'active': false
       }).eq('channel', roomID!).eq('version', version).eq('active', true).select();
       // NOTE: same strange error with  maybeSingle() here: "The result contains 0 rows"
+      // Maybe maybeSingle is only meant to be used with .then?
       if (results.isEmpty) {
         return;
       }
     }
     // Start new game from waiting room.
     try {
+      print('starting new game for channel $roomID');
       await Supabase.instance.client.from('games').insert({
         'channel': roomID,
         'active': true,
@@ -148,7 +147,14 @@ class WordGameState extends ChangeNotifier {
     } on PostgrestException catch (e) {
       print('Failed to start new game:');
       print(e.toString());
+      return;
     }
+    // Supabase appears to have trouble sending the first realtime update after some period of inactivity,
+    // so we have to manually fetch the game in case that happens.
+    Supabase.instance.client.from('games').select().eq('channel', roomID!).eq('active', true).maybeSingle().then((value) {
+      game = Game.fromJson(value);
+      notifyListeners();
+    });
   }
 
   moveCursorTo(Point<int> coor) async {

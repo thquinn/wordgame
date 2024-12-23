@@ -228,8 +228,12 @@ class Tile extends SpriteComponent with HasGameRef<WordGame> {
         }
       }
     }
-    final letter = tileState == TileState.provisional ? localState.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
-    textComponent.text = letter?.toUpperCase() ?? '';
+    String? letter = tileState == TileState.provisional ? localState.provisionalTiles[coor] : appState.game?.state.placedTiles[coor]?.letter;
+    letter = (letter ?? '').toUpperCase();
+    if (textComponent.text != letter) {
+      textComponent.text = letter;
+      textComponent.position.x = styleTile.getLineMetrics(letter).width / -2 + .5;
+    }
     // Placement animation.
     if (lift > 0) {
       final clampedLift = clampDouble(lift, 0, 1);

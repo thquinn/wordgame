@@ -32,11 +32,15 @@ class CountdownManager extends PositionComponent with HasGameRef<WordGame> {
   void update(double dt) {
     if (appState.game == null) return;
     final game = appState.game!;
+    final startMS = game.startsAt.difference(DateTime.now()).inMilliseconds;
+    final endMS = game.endsAt.difference(DateTime.now()).inMilliseconds;
     final startSeconds = clampSecondsOrDefault((game.startsAt.difference(DateTime.now()).inMilliseconds / 1000).ceil(), 1, 5);
     final endSeconds = clampSecondsOrDefault((game.endsAt.difference(DateTime.now()).inMilliseconds / 1000).ceil(), 1, 10);
     final secondsLeft = startSeconds != -1 ? startSeconds : endSeconds;
+    final msLeft = startSeconds != -1 ? startMS : endMS;
     if (secondsLeft == lastSecondsLeft) return;
-    if (secondsLeft != -1) {
+    if (secondsLeft != -1 && msLeft > 800) {
+      // Don't show a countdown number unless it has at least 0.8 seconds to play.
       add(CountdownNumber(secondsLeft));
     }
     lastSecondsLeft = secondsLeft;

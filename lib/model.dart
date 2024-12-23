@@ -142,6 +142,15 @@ class LocalState {
     sortRack();
   }
 
+  bool gameDelta(Game oldGame, Game newGame) {
+    bool changed = false;
+    if (provisionalTiles.keys.any((e) => newGame.state.placedTiles.containsKey(e))) {
+      provisionalTiles.clear();
+      changed = true;
+    }
+    return changed;
+  }
+
   sortRack() {
     rack.sort((a, b) => a == '*' ? 1 : b == '*' ? -1 : a.compareTo(b));
   }
