@@ -44,7 +44,6 @@ class WordGameState extends ChangeNotifier {
   connect(String roomID, String username) {
     roomID = roomID.toLowerCase();
     this.roomID = roomID;
-    print('connecting to channel $roomID');
     channel = Supabase.instance.client.channel(roomID);
     Supabase.instance.client.from('games').select().eq('channel', roomID).eq('active', true).maybeSingle().then((value) {
       game = Game.fromJson(value);
@@ -56,7 +55,6 @@ class WordGameState extends ChangeNotifier {
       table: 'games',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
       callback: (PostgresChangePayload payload) async {
-        print('received postgres insert: ${payload.eventType}');
         final newGame = Game.fromJson(payload.newRecord);
         if (game != null && game!.id > newGame!.id) {
           return; // we somehow already have a newer game.
@@ -74,7 +72,6 @@ class WordGameState extends ChangeNotifier {
       table: 'games',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel', value: roomID),
       callback: (PostgresChangePayload payload) async {
-        print('received postgres update: ${payload.eventType}');
         final updatedGame = Game.fromJson(payload.newRecord);
         if (game != null && updatedGame != null) {
           if (localState!.gameDelta(game!, updatedGame)) {
@@ -139,7 +136,6 @@ class WordGameState extends ChangeNotifier {
     }
     // Start new game from waiting room.
     try {
-      print('starting new game for channel $roomID');
       await Supabase.instance.client.from('games').insert({
         'channel': roomID,
         'active': true,
