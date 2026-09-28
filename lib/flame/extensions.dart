@@ -35,8 +35,8 @@ class AlphaNineTileBox extends NineTileBox {
   }
 
   @override
-  void drawRect(Canvas c, [Rect? dst]) {
-    c.drawImageNine(sprite.image, spriteCenter, dst!, paint);
+  void drawRect(Canvas c, [Rect? dst, Paint? overridePaint]) {
+    c.drawImageNine(sprite.image, spriteCenter, dst!, overridePaint ?? paint);
   }
 }
 

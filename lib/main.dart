@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           colorScheme:
               ColorScheme.fromSeed(seedColor: Color.fromRGBO(95, 95, 177, 1)),
           fontFamily: 'Solway',
-          cardTheme: CardTheme(elevation: 2),
+          cardTheme: CardThemeData(elevation: 2),
           inputDecorationTheme: InputDecorationTheme(
               contentPadding: EdgeInsets.all(10),
               isDense: true,
