@@ -7,11 +7,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
-      - uses: bluefireteam/flutter-gh-pages@v8
+      - run: flutter pub get
+      - run: flutter build web --release --base-href /wordgame/ --dart-define=ROOM_SERVER_URL=https://wordgame-rooms.caeonospam.workers.dev
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          baseHref: /wordgame/
-          customArgs: --dart-define=ROOM_SERVER_URL=https://wordgame-rooms.caeonospam.workers.dev
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: gh-pages
