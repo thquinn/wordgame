@@ -14,5 +14,4 @@ jobs:
       - uses: bluefireteam/flutter-gh-pages@v8
         with:
           baseHref: /wordgame/
-          webRenderer: canvaskit
           customArgs: --dart-define=ROOM_SERVER_URL=https://wordgame-rooms.caeonospam.workers.dev
