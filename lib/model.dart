@@ -12,7 +12,8 @@ class Game {
   final DateTime startsAt, endsAt;
   final int version;
 
-  Game(this.id, this.channel, this.state, this.active, this.startsAt, this.endsAt, this.version);
+  Game(this.id, this.channel, this.state, this.active, this.startsAt,
+      this.endsAt, this.version);
   static Game? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
     return Game(
@@ -32,7 +33,9 @@ class GameState {
   Map<Point<int>, PlacedTile> placedTiles;
   Map<Point<int>, PickupType> pickups;
 
-  GameState.empty() : placedTiles = {}, pickups = {};
+  GameState.empty()
+      : placedTiles = {},
+        pickups = {};
 
   GameState._(this.score, this.placedTiles, this.pickups);
 
@@ -42,7 +45,8 @@ class GameState {
     final placedTiles = <Point<int>, PlacedTile>{};
     for (var i = 0; i < placedTilesList.length; i += 4) {
       final coor = Point<int>(placedTilesList[i], placedTilesList[i + 1]);
-      placedTiles[coor] = PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
+      placedTiles[coor] =
+          PlacedTile(placedTilesList[i + 2], placedTilesList[i + 3]);
     }
     List pickupsList = json['pickups'] ?? [];
     final pickups = <Point<int>, PickupType>{};
@@ -53,37 +57,55 @@ class GameState {
     return GameState._(score, placedTiles, pickups);
   }
 
-  jsonAfterProvisional(LocalState presence, ProvisionalResult provisionalResult) {
+  jsonAfterProvisional(
+      LocalState presence, ProvisionalResult provisionalResult) {
     // Set state.
     final letterList = [];
     for (final entry in placedTiles.entries) {
-      letterList.addAll([entry.key.x, entry.key.y, entry.value.letter, entry.value.username]);
+      letterList.addAll(
+          [entry.key.x, entry.key.y, entry.value.letter, entry.value.username]);
     }
     for (final entry in provisionalResult.provisionalTiles.entries) {
-      letterList.addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
+      letterList
+          .addAll([entry.key.x, entry.key.y, entry.value, presence.username]);
     }
     final pickupList = [];
     for (final entry in pickups.entries) {
-      if (provisionalResult.provisionalTiles.containsKey(entry.key)) continue; // Pickup has been picked up!
-      pickupList.addAll([entry.key.x, entry.key.y, entry.value.toString().split('.').last]);
+      if (provisionalResult.provisionalTiles.containsKey(entry.key))
+        continue; // Pickup has been picked up!
+      pickupList.addAll(
+          [entry.key.x, entry.key.y, entry.value.toString().split('.').last]);
     }
     // Spawn pickups.
-    List<Point<int>> tileCoors = placedTiles.keys.followedBy(provisionalResult.provisionalTiles.keys).toList();
+    List<Point<int>> tileCoors = placedTiles.keys
+        .followedBy(provisionalResult.provisionalTiles.keys)
+        .toList();
     final targetPickupCount = (tileCoors.length / 15.0).floor();
     // Don't count pickups on the board that players are unlikely to ever be able to get.
-    final gettablePickupCount = pickups.keys.where((e) => _countAdjacentEmptySpaces(e) > 2).length;
+    final gettablePickupCount =
+        pickups.keys.where((e) => _countAdjacentEmptySpaces(e) > 2).length;
     final pickupsToSpawn = targetPickupCount - gettablePickupCount;
     if (pickupsToSpawn > 0) {
       Set<Point<int>> coorsToAvoid = tileCoors.followedBy(pickups.keys).toSet();
       for (int i = 0; i < pickupsToSpawn; i++) {
         // Find a coordinate at least 5 spaces from everything on the board.
-        for (int j = 0; j < 100; j++) { // Try a bunch of times to find a spot.
-          Point<int> spawnCandidate = tileCoors[Util.random.nextInt(tileCoors.length)];
+        for (int j = 0; j < 100; j++) {
+          // Try a bunch of times to find a spot.
+          Point<int> spawnCandidate =
+              tileCoors[Util.random.nextInt(tileCoors.length)];
           final distance = 6 + Util.random.nextInt(2);
           final xySplit = Util.random.nextInt(distance + 1);
-          spawnCandidate = Point(spawnCandidate.x + xySplit * (Util.random.nextBool() ? -1 : 1), spawnCandidate.y + (distance - xySplit) * (Util.random.nextBool() ? -1 : 1));
-          if (coorsToAvoid.every((e) => e.manhattanDistanceTo(spawnCandidate) >= 5)) {
-            pickupList.addAll([spawnCandidate.x, spawnCandidate.y, PickupType.wildcard.toString().split('.').last]);
+          spawnCandidate = Point(
+              spawnCandidate.x + xySplit * (Util.random.nextBool() ? -1 : 1),
+              spawnCandidate.y +
+                  (distance - xySplit) * (Util.random.nextBool() ? -1 : 1));
+          if (coorsToAvoid
+              .every((e) => e.manhattanDistanceTo(spawnCandidate) >= 5)) {
+            pickupList.addAll([
+              spawnCandidate.x,
+              spawnCandidate.y,
+              PickupType.wildcard.toString().split('.').last
+            ]);
             break;
           }
         }
@@ -96,17 +118,21 @@ class GameState {
       'pickups': pickupList,
     };
   }
+
   int _countAdjacentEmptySpaces(Point<int> coor) {
-    return Util.cardinalDirections.map((e) => coor + e).where((e) => !placedTiles.containsKey(e)).length;
+    return Util.cardinalDirections
+        .map((e) => coor + e)
+        .where((e) => !placedTiles.containsKey(e))
+        .length;
   }
 }
+
 class PlacedTile {
   final String letter, username;
   PlacedTile(this.letter, this.username);
 }
-enum PickupType {
-  wildcard
-}
+
+enum PickupType { wildcard }
 
 class LocalState {
   static const int PARTIAL_REFILL = 5;
@@ -120,11 +146,22 @@ class LocalState {
   int overflowTiles;
   List<double> bagDistribution;
   Map<Point<int>, String> provisionalTiles;
-  String? assister; // set to a username when another player gives you an assist tile
+  String?
+      assister; // set to a username when another player gives you an assist tile
 
-  LocalState(this.joinTime, this.username, this.cursor, this.cursorHorizontal, this.rackSize, this.rack, this.overflowTiles, this.bagDistribution, this.provisionalTiles);
+  LocalState(
+      this.joinTime,
+      this.username,
+      this.cursor,
+      this.cursorHorizontal,
+      this.rackSize,
+      this.rack,
+      this.overflowTiles,
+      this.bagDistribution,
+      this.provisionalTiles);
   factory LocalState.newLocal(String username) {
-    final localState = LocalState(DateTime.now().toUtc(), username, Point(0, 0), true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
+    final localState = LocalState(DateTime.now().toUtc(), username, Point(0, 0),
+        true, 10, [], 0, List<double>.from(Words.letterDistribution), {});
     localState.reset();
     return localState;
   }
@@ -144,7 +181,8 @@ class LocalState {
 
   bool gameDelta(Game oldGame, Game newGame) {
     bool changed = false;
-    if (provisionalTiles.keys.any((e) => newGame.state.placedTiles.containsKey(e))) {
+    if (provisionalTiles.keys
+        .any((e) => newGame.state.placedTiles.containsKey(e))) {
       provisionalTiles.clear();
       changed = true;
     }
@@ -152,7 +190,11 @@ class LocalState {
   }
 
   sortRack() {
-    rack.sort((a, b) => a == '*' ? 1 : b == '*' ? -1 : a.compareTo(b));
+    rack.sort((a, b) => a == '*'
+        ? 1
+        : b == '*'
+            ? -1
+            : a.compareTo(b));
   }
 
   drawTile({bool overflow = false}) {
@@ -176,6 +218,7 @@ class LocalState {
       }
     }
   }
+
   refillBag() {
     for (int i = 0; i < bagDistribution.length; i++) {
       bagDistribution[i] += Words.letterDistribution[i];
@@ -183,7 +226,15 @@ class LocalState {
   }
 
   countProvisionalWildcards() {
-    return provisionalTiles.isEmpty ? 0 : provisionalTiles.values.toSet().map((e) => max(0, provisionalTiles.values.where((f) => e == f).length - rack.where((f) => e == f).length)).reduce((a, b) => a + b);
+    return provisionalTiles.isEmpty
+        ? 0
+        : provisionalTiles.values
+            .toSet()
+            .map((e) => max(
+                0,
+                provisionalTiles.values.where((f) => e == f).length -
+                    rack.where((f) => e == f).length))
+            .reduce((a, b) => a + b);
   }
 
   loseLetterOrWildcard(String letter) {
@@ -198,6 +249,7 @@ class LocalState {
       sortRack();
     }
   }
+
   pickup(List<PickupType> pickups) {
     for (final pickup in pickups) {
       switch (pickup) {
@@ -209,6 +261,7 @@ class LocalState {
       }
     }
   }
+
   spendOverflowTiles() {
     while (rack.length < rackSize && overflowTiles > 0) {
       drawTile();
@@ -222,11 +275,7 @@ class LocalState {
       provisionalList.addAll([entry.key.x, entry.key.y, entry.value]);
     }
     return {
-      'join_time': joinTime.toString(),
-      'username': username,
       'cursor': [cursor.x, cursor.y],
-      'rack_size': rackSize,
-      'rack': rack,
       'provisional_tiles': provisionalList,
     };
   }
