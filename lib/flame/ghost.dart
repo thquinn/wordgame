@@ -74,15 +74,13 @@ class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
     textComponent = TextBoxComponent(
       anchor: Anchor.center,
       textRenderer: textPaint,
-      text: username,
-      align: Anchor(.5, .49),
+      align: Anchor.center,
       size: Vector2(3, .5),
       pixelRatio: 100,
       boxConfig: TextBoxConfig(maxWidth: 10000, margins: EdgeInsets.zero),
       priority: 1,
     );
     add(textComponent);
-    textComponent.update(0); // it occasionally fails to align, this seems to fix it...?
     final arrowSprite = await Sprite.load('ghost_arrow.png');
     add(SpriteComponent(sprite: arrowSprite, position: Vector2(0, .275), size: Vector2(1, 1), anchor: Anchor.bottomCenter)..opacity=0.1);
   }
@@ -98,14 +96,13 @@ class Ghost extends PositionComponent with HasGameRef<WordGame>, HasVisibility {
       final usernames = presences.where((e) => Point<int>(e.payload['cursor'][0], e.payload['cursor'][1]) == cursor).map((e) => e.payload['username'] as String).toList();
       usernames.removeWhere((e) => e == appState.localState!.username);
       usernames.sort();
-      usernames.add(' '); // _HACK: text box layout messes up with just one line
       isVisible = usernames[0] == username;
       if (!isVisible) return;
       final width = max(usernames.map((u) => textComponent.getLineWidth(u, u.length)).reduce(max) + .5, 1.0);
-      final height = (usernames.length - 1) * textPaint.fixedHeight + .8;
+      final height = usernames.length * textPaint.fixedHeight + .8;
       textComponent.size = Vector2(width, height);
       textComponent.text = usernames.join('\n');
-      textComponent.position = Vector2(0, height / 2 - .5);
+      textComponent.position = Vector2(0, boxComponent.position.y + height / 2);
       boxComponent.setSize(Vector2(width, height));
       position = Vector2(cursor.x.toDouble(), cursor.y + 1.2);
     } catch (e, stackTrace) {
